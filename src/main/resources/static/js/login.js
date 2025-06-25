@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setLoadingState();
 
             try {
-              const response = await fetch('http://localhost:8080/api/auth/forget-password', {
+              /*const response = await fetch('http://localhost:8080/api/auth/forget-password', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -192,7 +192,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 credentials: 'include',
                 body: JSON.stringify({ email: email })
-              });
+              });*/
+
+              const response = await fetch('/api/auth/forget-password', {
+                              method: 'POST',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'Accept': 'application/json'
+                              },
+                              credentials: 'include',
+                              body: JSON.stringify({ email: email })
+                          });
 
               const responseText = await response.text();
 

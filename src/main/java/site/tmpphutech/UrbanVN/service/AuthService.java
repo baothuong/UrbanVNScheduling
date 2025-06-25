@@ -25,6 +25,7 @@ public class AuthService {
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
         try {
             // Xác thực thông tin đăng nhập
@@ -70,7 +71,6 @@ public class AuthService {
         }
         return null;
     }
-
 
 
     public boolean isCurrentUserAdmin() {

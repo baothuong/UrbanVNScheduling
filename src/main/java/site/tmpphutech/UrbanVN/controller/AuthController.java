@@ -135,7 +135,7 @@ public class AuthController {
             passwordResetTokenService.save(token);
         }
 
-        // ✅ SỬA: Tự động xây dựng URL dựa trên request hiện tại
+        // Tự động xây dựng URL dựa trên request hiện tại
         String resetPasswordLink = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/reset-password.html")
                 .queryParam("token", newToken)
