@@ -1,0 +1,70 @@
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        color: white;
+        z-index: 100;
+        display: none;
+    }
+
+    .alert-success {
+        background-color: #34D399;
+    }
+
+    .alert-info {
+        background-color: #60A5FA;
+    }
+
+    .alert-warning {
+        background-color: #FBBF24;
+    }
+
+    .alert-error {
+        background-color: #EF4444;
+    }
+
+    /* Tùy chỉnh FullCalendar */
+    .fc-header-toolbar {
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .fc-button-primary {
+        background-color: #3B82F6 !important;
+        border-color: #3B82F6 !important;
+        font-size: 0.875rem;
+    }
+
+    .fc-button-primary:hover {
+        background-color: #2563EB !important;
+        border-color: #2563EB !important;
+    }
+
+    .fc-event {
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+
+    .fc-event .fc-event-main {
+         white-space: normal;
+         overflow-wrap: break-word;
+    }
+
+    /* Responsive cho mobile */
+    @media (max-width: 768px) {
+        .fc-header-toolbar {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+        }
+    }

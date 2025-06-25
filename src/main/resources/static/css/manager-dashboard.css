@@ -1,0 +1,74 @@
+    body {
+    font-family: 'Inter', sans-serif;
+    }
+    .nav-link {
+    font-size: 1.2em; /* Điều chỉnh kích thước chữ ở đây */
+    }
+.custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    color: red;
+    z-index: 9999;
+    display: none;
+}
+.alert-success { background-color: #34D399; }
+.alert-info { background-color: #60A5FA; }
+.alert-warning { background-color: #FBBF24; }
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+.tab-button.active {
+    border-bottom-color: #3B82F6; /* Blue-500 */
+    color: #3B82F6;
+    font-weight: 600;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+.fc-event {
+    cursor: pointer;
+}
+ .fc-timeline-event {
+    /* FullCalendarライブラリのデフォルトスタイルを上書きするために!importantを使用 */
+    display: flex !important;
+    align-items: center !important;    /* 垂直方向中央揃え */
+    justify-content: center !important; /* 水平方向中央揃え */
+}
+
+.fc-timeline-event .fc-event-main {
+    /* 内部コンテナが全スペースを占めるようにする */
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.fc-timeline-event .fc-event-title-container {
+     /* このコンテナ内のコンテンツを中央揃えにする */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.fc-timeline-event .fc-event-title {
+    /* テキスト部分の表示をカスタマイズ */
+    padding: 0 5px;           /* 左右に少しパディングを追加 */
+    white-space: nowrap;      /* テキストの折り返しを禁止 */
+    overflow: hidden;         /* はみ出したテキストを隠す */
+    text-overflow: ellipsis;  /* 長すぎるテキストに '...' を表示 */
+}
+ .fc-timeline-lane-frame {
+    /* イベントコンテナでFlexboxを有効化 */
+    display: flex;
+
+    /* Flexboxで垂直方向中央揃えを実現する魔法のプロパティ */
+    align-items: center;
+}

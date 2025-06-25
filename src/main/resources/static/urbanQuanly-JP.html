@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理ページ - 業務管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <script src=https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.17/index.global.min.js></script>
+  <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timeline@6.1.17/index.global.min.js'></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/manager-dashboard.css">
+</head>
+<body class="bg-gray-100">
+
+<nav class="bg-white shadow-md fixed w-full z-20 top-0">
+  <div class="container mx-auto px-6 py-3">
+    <div class="flex items-center justify-between">
+      <div class="flex-shrink-0">
+        <a href="/urbanQuanly-JP.html" title="Dashboard">
+          <img class="h-14 w-auto object-contain" src="/images/New_urban_logo_rgb_01.png" alt="Urban Corporation">
+        </a>
+      </div>
+      <div class="flex items-center">
+        <div class="hidden md:flex items-center space-x-1">
+          <a href="#dashboard-manager" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">
+            <i class="fas fa-tachometer-alt mr-1"></i> ダッシュボード
+          </a>
+          <a href="#quan-ly-nhan-vien" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">
+            <i class="fas fa-users mr-1"></i> 従業員管理
+          </a>
+          <a href="#lich-lam-viec-nhom" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">
+            <i class="fas fa-calendar-week mr-1"></i> チームスケジュール
+          </a>
+          <a href="#lich-ca-nhan" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">
+            <i class="fas fa-calendar-alt mr-1"></i> 個人スケジュール
+          </a>
+        </div>
+        <div class="ml-3 relative">
+          <button type="button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+            <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/A0AEC0?text=QL" alt="管理者のプロフィール写真">
+            <span class="hidden md:block ml-3 text-gray-700 font-medium">こんにちは、[マネージャー名]さん</span>
+            <i class="fas fa-chevron-down ml-2 hidden md:block text-gray-500 text-xs"></i>
+          </button>
+          <div id="user-menu" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+            <a href="#" id="view-profile-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1"><i class="fas fa-user-circle mr-2"></i>個人プロフィール</a>                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1"><i class="fas fa-sign-out-alt mr-2"></i>ログアウト</a>
+          </div>
+        </div>
+        <div class="md:hidden flex items-center">
+          <button id="mobile-menu-button" class="outline-none mobile-menu-button">
+            <svg class="w-6 h-6 text-gray-500 hover:text-blue-500" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="hidden mobile-menu" id="mobile-menu-items">
+      <ul class="mt-4 space-y-2">
+        <li><a href="#dashboard-manager" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-500 hover:bg-gray-50"><i class="fas fa-tachometer-alt mr-2"></i>ダッシュボード</a></li>
+        <li><a href="#quan-ly-nhan-vien" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-500 hover:bg-gray-50"><i class="fas fa-users mr-2"></i>従業員管理</a></li>
+        <li><a href="#lich-lam-viec-nhom" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-500 hover:bg-gray-50"><i class="fas fa-calendar-week mr-2"></i>チームスケジュール</a></li>
+        <li><a href="#duyet-yeu-cau" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-500 hover:bg-gray-50"><i class="fas fa-check-circle mr-2"></i>申請の承認</a></li>
+        <li><a href="#lich-ca-nhan" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-500 hover:bg-gray-50"><i class="fas fa-calendar-alt mr-2"></i>個人スケジュール</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="pt-24 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <section id="dashboard-manager" class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">管理ダッシュボード</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div class="bg-white p-6 rounded-lg shadow-lg flex items-center">
+        <div class="bg-blue-100 p-4 rounded-full">
+          <i class="fas fa-users text-2xl text-blue-500"></i>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-500 text-sm font-medium">総従業員数</h2>
+          <p id="stats-total-employees" class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-spinner fa-spin"></i>
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold text-gray-700 mb-3"><i class="fas fa-briefcase text-purple-500 mr-2"></i>役職別</h2>
+        <div id="stats-by-position" class="space-y-2 text-sm text-gray-600">
+          <p class="text-center text-gray-400"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold text-gray-700 mb-3"><i class="fas fa-building text-green-500 mr-2"></i>オフィス別</h2>
+        <div id="stats-by-office" class="space-y-2 text-sm text-gray-600">
+          <p class="text-center text-gray-400"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="quan-ly-nhan-vien" class="mb-8 p-6 bg-white rounded-lg shadow-lg min-h-[400px]">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <h2 class="text-2xl font-bold text-gray-800">従業員一覧</h2>
+      <button id="add-employee-main-btn"
+              class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+        <i class="fas fa-user-plus mr-2"></i> 従業員を追加
+      </button>
+    </div>
+    <div class="mb-4 flex flex-col sm:flex-row gap-4">
+      <input type="text" id="search-employee-input" placeholder="従業員を検索 (氏名、メールアドレス)..."
+             class="p-2 border border-gray-300 rounded-md sm:flex-grow">
+      <select id="filter-employee-office" class="p-2 border border-gray-300 rounded-md">
+        <option value="">すべてのオフィス</option>
+      </select>
+      <select id="filter-employee-role" class="p-2 border border-gray-300 rounded-md">
+        <option value="">すべての役職</option>
+        <option value="STAFF">従業員</option>
+        <option value="MANAGER">マネージャー</option>
+        <option value="LEADER">リーダー</option>
+      </select>
+    </div>
+    <div class="overflow-x-auto rounded-lg shadow">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium tracking-wider">氏名</th>
+          <th class="px-6 py-3 text-left text-xs font-medium tracking-wider">メールアドレス</th>
+          <th class="px-6 py-3 text-left text-xs font-medium tracking-wider">役職</th>
+          <th class="px-6 py-3 text-left text-xs font-medium tracking-wider">オフィス</th>
+          <th class="px-6 py-3 text-center text-xs font-medium tracking-wider">操作</th>
+        </tr>
+        </thead>
+        <tbody id="employee-table-body" class="bg-white divide-y divide-gray-200 text-sm text-gray-700">
+
+        </tbody>
+      </table>
+    </div>
+    <div id="employee-pagination" class="mt-6 flex justify-center">
+    </div>
+  </section>
+  <section id="lich-lam-viec-nhom" class="mb-8 p-6 bg-white rounded-lg shadow-lg">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <h2 class="text-2xl font-bold text-gray-800">チームのスケジュール</h2>
+      <div id="team-calendar-legend" class="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 p-3 bg-gray-50 rounded-lg">
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="add-schedule-main-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+          <i class="fas fa-plus mr-2"></i> スケジュールを追加
+        </button>
+        <label for="team-calendar-office-filter" class="text-sm font-medium">オフィスで絞り込み:</label>
+        <select id="team-calendar-office-filter" class="p-2 border border-gray-300 rounded-md">
+          <option value="">すべてのオフィス</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="team-calendar" class="min-h-[600px]">
+      <div class="flex justify-center items-center h-full">
+        <p class="text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>スケジュールを読み込み中...</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="quan-ly-van-phong" class="mb-8 p-6 bg-white rounded-lg shadow-lg">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">オフィス管理</h2>
+      <button id="add-office-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+        <i class="fas fa-plus mr-2"></i> 新規オフィスを追加
+      </button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">オフィス名</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">住所</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+        </tr>
+        </thead>
+        <tbody id="office-table-body" class="bg-white divide-y divide-gray-200">
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="lich-ca-nhan" class="mb-8 p-6 bg-white rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">個人スケジュール</h2>
+    <div id="personal-calendar-legend" class="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 p-3 bg-gray-50 rounded-lg">
+    </div>
+    <div id="personal-calendar" class="min-h-[600px]">
+      <div class="flex justify-center items-center h-full">
+        <p class="text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>個人スケジュールを読み込み中...</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+<div id="view-employee-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full hidden z-[60] flex items-center justify-center">
+  <div class="relative mx-auto p-5 border w-full max-w-xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900">従業員詳細情報</h3>
+
+      <button id="close-view-employee-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none text-2xl">&times;</button>
+    </div>
+    <div id="view-employee-content" class="max-h-[70vh] overflow-y-auto pr-2">
+    </div>
+    <div class="flex justify-end space-x-3 pt-4 border-t mt-4">
+      <button type="button" id="cancel-view-employee-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 shadow-sm">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="employee-modal"
+     class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+  <div class="relative mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900" id="employee-modal-title">新規従業員を追加</h3>
+      <button id="close-employee-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none text-2xl">&times;</button>
+    </div>
+
+    <form id="employee-form" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      <input type="hidden" id="employee-id">
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">プロフィール写真</label>
+        <div class="mt-1 flex items-center space-x-4">
+          <img id="employee-avatar-preview" src="https://placehold.co/100x100/E2E8F0/A0AEC0?text=Avatar" alt="アバタープレビュー" class="w-20 h-20 rounded-full object-cover bg-gray-200 border">
+          <input type="file" id="employee-avatar-input" name="avatarFile" accept="image/png, image/jpeg, image/gif" class="hidden">
+          <button type="button" id="employee-avatar-select-btn" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">画像を選択</button>
+          <button type="button" id="employee-avatar-remove-btn" class="text-red-500 hover:text-red-700 text-sm hidden"><i class="fas fa-trash-alt mr-1"></i> 画像を削除</button>
+        </div>
+        <input type="hidden" id="employee-avatar-url" name="avatar"> <p class="text-xs text-gray-500 mt-1">PNG、JPG、GIF画像。最大5MB。</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="employee-name" class="block text-sm font-medium text-gray-700">氏名 *</label>
+          <input type="text" id="employee-name" name="name" required
+                 class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label for="employee-username" class="block text-sm font-medium text-gray-700">ユーザー名 *</label>
+          <input type="text" id="employee-username" name="username" required
+                 class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+
+      <div>
+        <label for="employee-email" class="block text-sm font-medium text-gray-700">メールアドレス *</label>
+        <input type="email" id="employee-email" name="email" required
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <div id="employee-password-group">
+        <label for="employee-password" class="block text-sm font-medium text-gray-700">パスワード</label>
+        <input type="password" id="employee-password" name="password"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs text-gray-500 mt-1" id="employee-password-help">新規作成時は必須です。更新時にパスワードを変更しない場合は空のままにしてください。</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="employee-phoneNumber" class="block text-sm font-medium text-gray-700">電話番号</label>
+          <input type="tel" id="employee-phoneNumber" name="phoneNumber"
+                 class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label for="employee-gender" class="block text-sm font-medium text-gray-700">性別</label>
+          <select id="employee-gender" name="gender"
+                  class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">性別を選択</option>
+            <option value="MALE">男性</option>
+            <option value="FEMALE">女性</option>
+            <option value="OTHER">その他</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="employee-address" class="block text-sm font-medium text-gray-700">住所</label>
+        <textarea id="employee-address" name="address" rows="2"
+                  class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="employee-position" class="block text-sm font-medium text-gray-700">役職 *</label>
+          <select id="employee-position" name="position" required
+                  class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">役職を選択</option>
+            <option value="STAFF">従業員 (STAFF)</option>
+            <option value="LEADER">リーダー (LEADER)</option>
+            <option value="MANAGER">マネージャー (MANAGER)</option>
+          </select>
+        </div>
+        <div>
+          <label for="employee-officeId" class="block text-sm font-medium text-gray-700">オフィス *</label>
+          <select id="employee-officeId" name="officeId" required
+                  class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">オフィスを選択</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="employee-role" class="block text-sm font-medium text-gray-700">システム権限 *</label>
+        <select id="employee-role" name="role" required
+                class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="USER">ユーザー (USER)</option>
+          <option value="MANAGER">マネージャー (MANAGER)</option>
+          <option value="ADMIN">管理者 (ADMIN)</option>
+        </select>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-4 border-t mt-6">
+        <button type="button" id="cancel-employee-btn"
+                class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 shadow-sm">キャンセル</button>
+        <button type="submit" id="save-employee-btn"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm">従業員を保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="schedule-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full hidden z-[60] flex items-center justify-center">
+  <div class="relative mx-auto p-6 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900" id="schedule-modal-title"></h3>
+      <button id="close-schedule-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none text-2xl">&times;</button>
+    </div>
+    <form id="schedule-form" class="space-y-4">
+      <input type="hidden" id="schedule-id">
+      <div>
+        <label for="schedule-employee" class="block text-sm font-medium text-gray-700">従業員 *</label>
+        <select id="schedule-employee" name="employeeId" required class="mt-1 w-full p-2 border rounded-md"></select>
+      </div>
+      <div>
+        <label for="schedule-workType" class="block text-sm font-medium text-gray-700">勤務種別 *</label>
+        <select id="schedule-workType" name="workType" required class="mt-1 w-full p-2 border rounded-md">
+          <option value="">勤務種別を選択</option>
+          <option value="NORMAL">通常勤務</option>
+          <option value="BUSINESS_TRIP">出張</option>
+          <option value="VACATION">休暇</option>
+          <option value="OUTSIDE">外出</option>
+          <option value="OVERTIME">残業</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="schedule-startDate" class="block text-sm font-medium text-gray-700">開始日 *</label>
+          <input type="date" id="schedule-startDate" name="startDate" required class="mt-1 w-full p-2 border rounded-md">
+        </div>
+        <div>
+          <label for="schedule-endDate" class="block text-sm font-medium text-gray-700">終了日 *</label>
+          <input type="date" id="schedule-endDate" name="endDate" required class="mt-1 w-full p-2 border rounded-md">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="schedule-startTime" class="block text-sm font-medium text-gray-700">開始時間</label>
+          <input type="time" id="schedule-startTime" name="startTime" class="mt-1 w-full p-2 border rounded-md">
+        </div>
+        <div>
+          <label for="schedule-endTime" class="block text-sm font-medium text-gray-700">終了時間</label>
+          <input type="time" id="schedule-endTime" name="endTime" class="mt-1 w-full p-2 border rounded-md">
+        </div>
+      </div>
+      <div>
+        <label for="schedule-office" class="block text-sm font-medium text-gray-700">オフィス *</label>
+        <select id="schedule-office" name="officeId" required class="mt-1 w-full p-2 border rounded-md">
+          <option value="">オフィスを選択</option>
+        </select>
+      </div>
+      <div>
+        <label for="schedule-notes" class="block text-sm font-medium text-gray-700">メモ</label>
+        <textarea id="schedule-notes" name="notes" rows="3" class="mt-1 w-full p-2 border rounded-md"></textarea>
+      </div>
+      <div class="flex justify-between items-center pt-4 border-t mt-6">
+        <button type="button" id="delete-schedule-btn" class="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hidden">
+          <i class="fas fa-trash-alt mr-2"></i>削除
+        </button>
+        <div class="space-x-3 ml-auto">
+          <button type="button" id="cancel-schedule-btn" class="px-5 py-2 bg-gray-200 rounded-md">キャンセル</button>
+          <button type="submit" id="save-schedule-btn" class="px-5 py-2 bg-blue-600 text-white rounded-md">保存</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="office-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+  <div class="relative mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900" id="office-modal-title">新規オフィスを追加</h3>
+      <button id="close-office-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">&times;</button>
+    </div>
+
+    <form id="office-form" class="space-y-4">
+      <input type="hidden" id="office-id">
+      <div>
+        <label for="office-name" class="block text-sm font-medium text-gray-700">オフィス名 *</label>
+        <input type="text" id="office-name" name="name" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label for="office-address" class="block text-sm font-medium text-gray-700">住所</label>
+        <textarea id="office-address" name="address" rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div class="flex justify-end space-x-3 pt-4 border-t">
+        <button type="button" id="cancel-office-btn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">キャンセル</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="custom-alert-box" class="custom-alert">
+  <span id="custom-alert-message"></span>
+</div>
+<script src="/js/manager-dashboard.js"></script>
+</body>
+</html>
