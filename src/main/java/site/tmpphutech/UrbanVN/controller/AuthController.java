@@ -1,6 +1,7 @@
 // Cập nhật AuthController.java
 package site.tmpphutech.UrbanVN.controller;
 
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import site.tmpphutech.UrbanVN.dto.*;
 import site.tmpphutech.UrbanVN.model.Employee;
 import site.tmpphutech.UrbanVN.model.PasswordResetToken;
@@ -78,7 +79,8 @@ public class AuthController {
             throw e;
         }
     }
-    @PostMapping("/forget-password")
+
+    /*@PostMapping("/forget-password")
     public ResponseEntity<String> forgetPassword(@RequestBody ForgetPasswordRequestDTO request) {
         String email = request.getEmail();
         PasswordResetToken passwordResetToken = new PasswordResetToken();
@@ -108,7 +110,46 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Gửi email đến người dùng thất bại");
         }
 
+    }*/
+
+    // Thêm import
+
+    @PostMapping("/forget-password")
+    public ResponseEntity<String> forgetPassword(@RequestBody ForgetPasswordRequestDTO request) {
+        String email = request.getEmail();
+        PasswordResetToken passwordResetToken = new PasswordResetToken();
+        Optional<PasswordResetToken> opt = passwordResetTokenService.findByEmail(email);
+        String newToken = SecurityUtil.generateRandomToken();
+        LocalDateTime newExpiry = LocalDateTime.now().plusMinutes(30);
+
+        if(opt.isPresent()) {
+            PasswordResetToken token = opt.get();
+            token.setToken(newToken);
+            token.setExpiryDate(newExpiry);
+            passwordResetTokenService.save(token);
+        } else {
+            PasswordResetToken token = new PasswordResetToken();
+            token.setEmail(email);
+            token.setToken(newToken);
+            token.setExpiryDate(newExpiry);
+            passwordResetTokenService.save(token);
+        }
+
+        // ✅ SỬA: Tự động xây dựng URL dựa trên request hiện tại
+        String resetPasswordLink = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/reset-password.html")
+                .queryParam("token", newToken)
+                .toUriString();
+
+        try{
+            emailService.sendForgotPasswordEmail(email, resetPasswordLink);
+            return ResponseEntity.ok("Gửi email đến người dùng thành công");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Gửi email đến người dùng thất bại");
+        }
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
