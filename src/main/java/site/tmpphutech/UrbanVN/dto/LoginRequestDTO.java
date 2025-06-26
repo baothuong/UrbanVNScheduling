@@ -6,9 +6,9 @@ import lombok.Data;
 
 @Data
 public class LoginRequestDTO {
-    @NotBlank(message = "Username không được để trống")
+    @NotBlank(message = "ユーザー名を入力してください。")
     private String username;
 
-    @NotBlank(message = "Password không được để trống")
+    @NotBlank(message = "パスワードを入力してください。")
     private String password;
 }

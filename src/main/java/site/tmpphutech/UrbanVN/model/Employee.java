@@ -1,14 +1,12 @@
 package site.tmpphutech.UrbanVN.model;
 
+import site.tmpphutech.UrbanVN.enums.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import site.tmpphutech.UrbanVN.enums.Gender;
-import site.tmpphutech.UrbanVN.enums.Position;
-import site.tmpphutech.UrbanVN.enums.Role;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

@@ -1,8 +1,8 @@
 package site.tmpphutech.UrbanVN.dto;
 
-
-import lombok.Data;
+import site.tmpphutech.UrbanVN.enums.ScheduleStatus;
 import site.tmpphutech.UrbanVN.enums.WorkType;
+import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -20,5 +20,7 @@ public class ScheduleDTO {
     private LocalTime endTime;
     private WorkType workType;
     private String notes;
+    private ScheduleStatus status;
+
 }
 

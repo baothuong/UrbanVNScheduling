@@ -66,18 +66,19 @@ CREATE TABLE IF NOT EXISTS `offices` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `address` varchar(255) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
+  `is_active` bit(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKedjms83xmpm0fdqiqya1a6qwt` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.offices: ~5 rows (xấp xỉ)
 DELETE FROM `offices`;
-INSERT INTO `offices` (`id`, `address`, `name`) VALUES
-	(1, 'Tầng 10, Tòa nhà Keangnam, Phạm Hùng, Nam Từ Liêm, Hà Nội', 'Văn phòng Hà Nội'),
-	(2, 'Tầng 15, Tòa nhà Bitexco, Quận 1, TP.HCM', 'Văn phòng TP.HCM'),
-	(3, 'Tầng 5, Tòa nhà FPT, Quận Ngũ Hành Sơn, Đà Nẵng', 'Văn phòng Đà Nẵng'),
-	(4, 'Shibuya Sky Building, Tokyo, Japan', 'Văn phòng Tokyo'),
-	(5, 'Umeda Business Center, Osaka, Japan', 'Văn phòng Osaka');
+INSERT INTO `offices` (`id`, `address`, `name`, `is_active`) VALUES
+	(1, 'Tầng 10, Tòa nhà Keangnam, Phạm Hùng, Nam Từ Liêm, Hà Nội', 'Văn phòng Hà Nội', b'0'),
+	(2, 'Tầng 15, Tòa nhà Bitexco, Quận 1, TP.HCM', 'Văn phòng TP.HCM', b'0'),
+	(3, 'Tầng 5, Tòa nhà FPT, Quận Ngũ Hành Sơn, Đà Nẵng', 'Văn phòng Đà Nẵng', b'0'),
+	(4, 'Shibuya Sky Building, Tokyo, Japan', 'Văn phòng Tokyo', b'0'),
+	(5, 'Umeda Business Center, Osaka, Japan', 'Văn phòng Osaka', b'0');
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.password_reset_token
 DROP TABLE IF EXISTS `password_reset_token`;
@@ -89,10 +90,13 @@ CREATE TABLE IF NOT EXISTS `password_reset_token` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKcokxly6aosm7di3ldt7whhoqw` (`email`),
   UNIQUE KEY `UKg0guo4k8krgpwuagos61oc06j` (`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Đang kết xuất đổ dữ liệu cho bảng urbanvn.password_reset_token: ~0 rows (xấp xỉ)
+-- Đang kết xuất đổ dữ liệu cho bảng urbanvn.password_reset_token: ~2 rows (xấp xỉ)
 DELETE FROM `password_reset_token`;
+INSERT INTO `password_reset_token` (`id`, `email`, `expiry_date`, `token`) VALUES
+	(1, 'zerotwo18022003@gmail.com', '2025-06-25 13:40:31.000000', '54907179-997f-4c78-9beb-84fe0f68cb59'),
+	(2, 'baothuong18022003@gmail.com', '2025-06-25 20:54:49.000000', '6a047ed4-59a4-4144-bc22-0a27c8dbcbd3');
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.schedules
 DROP TABLE IF EXISTS `schedules`;
@@ -108,6 +112,7 @@ CREATE TABLE IF NOT EXISTS `schedules` (
   `work_type` enum('BUSINESS_TRIP','NORMAL','OUTSIDE','OVERTIME','VACATION') DEFAULT NULL,
   `employee_id` bigint(20) NOT NULL,
   `office_id` bigint(20) DEFAULT NULL,
+  `status` enum('ACTIVE','CANCELLED') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FKk1xoduufw1mu7ywao2xg90g3f` (`employee_id`),
   KEY `FK_schedules_offices` (`office_id`),
@@ -117,43 +122,43 @@ CREATE TABLE IF NOT EXISTS `schedules` (
 
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.schedules: ~36 rows (xấp xỉ)
 DELETE FROM `schedules`;
-INSERT INTO `schedules` (`id`, `created_at`, `end_time`, `notes`, `start_time`, `updated_at`, `start_date`, `end_date`, `work_type`, `employee_id`, `office_id`) VALUES
-	(1, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-17', '2025-07-19', 'VACATION', 1, NULL),
-	(2, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'OVERTIME', 1, NULL),
-	(3, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-07-18', '2025-07-21', 'BUSINESS_TRIP', 1, NULL),
-	(4, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-03', '2025-07-03', 'OVERTIME', 1, NULL),
-	(5, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-19', '2025-07-19', 'NORMAL', 2, NULL),
-	(6, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-06-26', '2025-06-28', 'BUSINESS_TRIP', 2, NULL),
-	(7, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-04', '2025-07-04', 'NORMAL', 2, NULL),
-	(8, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-23', '2025-07-23', 'OUTSIDE', 3, NULL),
-	(9, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'NORMAL', 3, NULL),
-	(10, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-11', '2025-07-11', 'OUTSIDE', 3, NULL),
-	(11, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'OVERTIME', 3, NULL),
-	(12, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-27', '2025-06-27', 'NORMAL', 4, NULL),
-	(13, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-08', '2025-07-10', 'VACATION', 4, NULL),
-	(14, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-06-26', '2025-06-30', 'VACATION', 5, NULL),
-	(15, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-06-24', '2025-06-29', 'BUSINESS_TRIP', 5, NULL),
-	(16, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-02', '2025-07-02', 'NORMAL', 6, NULL),
-	(17, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-26', '2025-06-26', 'OUTSIDE', 6, NULL),
-	(18, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-16', '2025-07-16', 'OVERTIME', 7, NULL),
-	(19, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-14', '2025-07-14', 'NORMAL', 7, NULL),
-	(20, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-07-15', '2025-07-17', 'BUSINESS_TRIP', 7, NULL),
-	(21, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-06-29', '2025-07-02', 'VACATION', 7, NULL),
-	(22, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-22', '2025-07-26', 'VACATION', 8, NULL),
-	(23, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-16', '2025-07-20', 'VACATION', 8, NULL),
-	(24, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-03', '2025-07-03', 'OVERTIME', 8, NULL),
-	(25, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-06-29', '2025-07-02', 'VACATION', 8, NULL),
-	(26, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-12', '2025-07-16', 'VACATION', 9, NULL),
-	(27, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-18', '2025-07-18', 'OVERTIME', 9, NULL),
-	(28, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-07-12', '2025-07-16', 'BUSINESS_TRIP', 9, NULL),
-	(29, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-06-30', '2025-07-05', 'BUSINESS_TRIP', 10, NULL),
-	(30, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-03', '2025-07-03', 'OVERTIME', 10, NULL),
-	(31, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-08', '2025-07-08', 'NORMAL', 11, NULL),
-	(32, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-30', '2025-06-30', 'OUTSIDE', 11, NULL),
-	(33, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'OUTSIDE', 12, NULL),
-	(34, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-13', '2025-07-13', 'OUTSIDE', 12, NULL),
-	(35, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-22', '2025-07-22', 'NORMAL', 12, NULL),
-	(36, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-18', '2025-07-23', 'VACATION', 12, NULL);
+INSERT INTO `schedules` (`id`, `created_at`, `end_time`, `notes`, `start_time`, `updated_at`, `start_date`, `end_date`, `work_type`, `employee_id`, `office_id`, `status`) VALUES
+	(1, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-17', '2025-07-19', 'VACATION', 1, NULL, 'ACTIVE'),
+	(2, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'OVERTIME', 1, NULL, 'ACTIVE'),
+	(3, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-07-18', '2025-07-21', 'BUSINESS_TRIP', 1, NULL, 'ACTIVE'),
+	(4, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-03', '2025-07-03', 'OVERTIME', 1, NULL, 'ACTIVE'),
+	(5, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-19', '2025-07-19', 'NORMAL', 2, NULL, 'ACTIVE'),
+	(6, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-06-26', '2025-06-28', 'BUSINESS_TRIP', 2, NULL, 'ACTIVE'),
+	(7, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-04', '2025-07-04', 'NORMAL', 2, NULL, 'ACTIVE'),
+	(8, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-23', '2025-07-23', 'OUTSIDE', 3, NULL, 'ACTIVE'),
+	(9, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'NORMAL', 3, NULL, 'ACTIVE'),
+	(10, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-11', '2025-07-11', 'OUTSIDE', 3, NULL, 'ACTIVE'),
+	(11, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'OVERTIME', 3, NULL, 'ACTIVE'),
+	(12, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-27', '2025-06-27', 'NORMAL', 4, NULL, 'ACTIVE'),
+	(13, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-08', '2025-07-10', 'VACATION', 4, NULL, 'ACTIVE'),
+	(14, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-06-26', '2025-06-30', 'VACATION', 5, NULL, 'ACTIVE'),
+	(15, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-06-24', '2025-06-29', 'BUSINESS_TRIP', 5, NULL, 'ACTIVE'),
+	(16, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-02', '2025-07-02', 'NORMAL', 6, NULL, 'ACTIVE'),
+	(17, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-26', '2025-06-26', 'OUTSIDE', 6, NULL, 'ACTIVE'),
+	(18, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-16', '2025-07-16', 'OVERTIME', 7, NULL, 'ACTIVE'),
+	(19, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-14', '2025-07-14', 'NORMAL', 7, NULL, 'ACTIVE'),
+	(20, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-07-15', '2025-07-17', 'BUSINESS_TRIP', 7, NULL, 'ACTIVE'),
+	(21, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-06-29', '2025-07-02', 'VACATION', 7, NULL, 'ACTIVE'),
+	(22, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-22', '2025-07-26', 'VACATION', 8, NULL, 'ACTIVE'),
+	(23, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-16', '2025-07-20', 'VACATION', 8, NULL, 'ACTIVE'),
+	(24, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-03', '2025-07-03', 'OVERTIME', 8, NULL, 'ACTIVE'),
+	(25, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-06-29', '2025-07-02', 'VACATION', 8, NULL, 'ACTIVE'),
+	(26, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-12', '2025-07-16', 'VACATION', 9, NULL, 'ACTIVE'),
+	(27, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-18', '2025-07-18', 'OVERTIME', 9, NULL, 'ACTIVE'),
+	(28, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-07-12', '2025-07-16', 'BUSINESS_TRIP', 9, NULL, 'ACTIVE'),
+	(29, '2025-06-24 10:10:12.000000', NULL, 'Đi công tác dài ngày', NULL, '2025-06-24 10:10:12.000000', '2025-06-30', '2025-07-05', 'BUSINESS_TRIP', 10, NULL, 'ACTIVE'),
+	(30, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-03', '2025-07-03', 'OVERTIME', 10, NULL, 'ACTIVE'),
+	(31, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-08', '2025-07-08', 'NORMAL', 11, NULL, 'ACTIVE'),
+	(32, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-30', '2025-06-30', 'OUTSIDE', 11, NULL, 'ACTIVE'),
+	(33, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-06-28', '2025-06-28', 'OUTSIDE', 12, NULL, 'ACTIVE'),
+	(34, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-13', '2025-07-13', 'OUTSIDE', 12, NULL, 'ACTIVE'),
+	(35, '2025-06-24 10:10:12.000000', '17:30:00.000000', 'Công việc trong ngày.', '08:30:00.000000', '2025-06-24 10:10:12.000000', '2025-07-22', '2025-07-22', 'NORMAL', 12, NULL, 'ACTIVE'),
+	(36, '2025-06-24 10:10:12.000000', NULL, 'Nghỉ phép theo kế hoạch', NULL, '2025-06-24 10:10:12.000000', '2025-07-18', '2025-07-23', 'VACATION', 12, NULL, 'ACTIVE');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

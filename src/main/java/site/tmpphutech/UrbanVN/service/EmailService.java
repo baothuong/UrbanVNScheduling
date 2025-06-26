@@ -44,7 +44,7 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setTo(toEmail);
-        helper.setSubject("Yêu cầu đặt lại mật khẩu");
+        helper.setSubject("パスワードリセットリクエスト");
         helper.setText(htmlContent, true);
 
         mailSender.send(message);

@@ -47,6 +47,12 @@ public class OfficeController {
         return ResponseEntity.ok(office);
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<List<OfficeDTO>> getAllActiveOffices() {
+        List<OfficeDTO> offices = officeService.getAllActiveOffices();
+        return ResponseEntity.ok(offices);
+    }
+
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")

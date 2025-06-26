@@ -1,4 +1,5 @@
 package site.tmpphutech.UrbanVN.model;
+import site.tmpphutech.UrbanVN.enums.ScheduleStatus;
 import site.tmpphutech.UrbanVN.enums.WorkType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -45,6 +46,10 @@ public class Schedule {
     private WorkType workType;
 
     private String notes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ScheduleStatus status = ScheduleStatus.ACTIVE;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

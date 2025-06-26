@@ -6,9 +6,8 @@ import lombok.Data;
 
 @Data
 public class OfficeCreateDTO {
-    @NotBlank(message = "Tên văn phòng không được để trống")
+    @NotBlank(message = "オフィス名を入力してください。")
     private String name;
 
     private String address;
 }
-

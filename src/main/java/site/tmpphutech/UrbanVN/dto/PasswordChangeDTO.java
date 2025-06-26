@@ -1,19 +1,21 @@
 package site.tmpphutech.UrbanVN.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class PasswordChangeDTO {
-    @NotBlank(message = "Mật khẩu hiện tại không được để trống")
+    @NotBlank(message = "現在のパスワードは空白にできません")
     private String currentPassword;
 
-    @NotBlank(message = "Mật khẩu mới không được để trống")
-    @Size(min = 6, message = "Mật khẩu mới phải có ít nhất 6 ký tự")
+    @NotBlank(message = "新しいパスワードは空白にできません")
+    @Size(min = 6, message = "新しいパスワードは6文字以上でなければなりません")
+    @Pattern(regexp = "^\\S*$", message = "新しいパスワードにはスペースを含めることはできません")
     private String newPassword;
 
-    @NotBlank(message = "Xác nhận mật khẩu không được để trống")
+    @NotBlank(message = "パスワードの確認は空欄にできません")
     private String confirmPassword;
 }
 

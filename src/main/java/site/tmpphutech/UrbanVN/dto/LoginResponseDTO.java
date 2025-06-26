@@ -1,6 +1,7 @@
 // LoginResponseDTO.java
 package site.tmpphutech.UrbanVN.dto;
 
+import site.tmpphutech.UrbanVN.enums.Role;
 import lombok.Data;
 
 @Data

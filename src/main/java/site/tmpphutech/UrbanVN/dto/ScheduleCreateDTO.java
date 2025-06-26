@@ -1,30 +1,29 @@
 package site.tmpphutech.UrbanVN.dto;
 
-
+import site.tmpphutech.UrbanVN.enums.WorkType;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import site.tmpphutech.UrbanVN.enums.WorkType;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Data
 public class ScheduleCreateDTO {
-    @NotNull(message = "ID nhân viên không được để trống")
+    @NotNull(message = "従業員IDは空欄にできません")
     private Long employeeId;
 
-    @NotNull(message = "Văn phòng không được để trống")
+    @NotNull(message = "オフィスを空のままにすることはできません")
     private Long officeId;
 
-    @NotNull(message = "Ngày làm việc không được để trống")
+    @NotNull(message = "営業日は空白のままにできません")
     private LocalDate startDate;
-    @NotNull(message = "Ngày làm việc không được để trống")
+    @NotNull(message = "営業日は空白のままにできません")
     private LocalDate endDate;
 
     private LocalTime startTime;
     private LocalTime endTime;
 
-    @NotNull(message = "Loại công việc không được để trống")
+    @NotNull(message = "求人種別は空白のままにできません")
     private WorkType workType;
 
     private String notes;

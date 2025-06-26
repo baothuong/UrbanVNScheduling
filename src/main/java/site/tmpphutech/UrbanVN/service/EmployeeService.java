@@ -3,6 +3,7 @@ package site.tmpphutech.UrbanVN.service;
 import site.tmpphutech.UrbanVN.dto.*;
 import site.tmpphutech.UrbanVN.enums.Position;
 import site.tmpphutech.UrbanVN.enums.Role;
+import site.tmpphutech.UrbanVN.exception.PermissionDeniedException;
 import site.tmpphutech.UrbanVN.exception.ResourceNotFoundException;
 import site.tmpphutech.UrbanVN.exception.DuplicateResourceException;
 import site.tmpphutech.UrbanVN.model.Employee;
@@ -40,28 +41,28 @@ public class EmployeeService {
 
     public EmployeeDTO getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + id + " の従業員が見つかりません。"));
         return convertToDTO(employee);
     }
 
     public EmployeeDTO findEmployeeByEmail(String email){
         Employee employee = employeeRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("メールアドレス: " + email + " の従業員が見つかりません。"));
         return convertToDTO(employee);
     }
 
     public EmployeeDTO createEmployee(EmployeeCreateDTO createDTO) {
         // Kiểm tra username và email đã tồn tại
         if (employeeRepository.existsByUsername(createDTO.getUsername())) {
-            throw new DuplicateResourceException("Username đã tồn tại: " + createDTO.getUsername());
+            throw new DuplicateResourceException("ユーザー名は既に存在します: " + createDTO.getUsername());
         }
         if (employeeRepository.existsByEmail(createDTO.getEmail())) {
-            throw new DuplicateResourceException("Email đã tồn tại: " + createDTO.getEmail());
+            throw new DuplicateResourceException("メールアドレスは既に存在します: " + createDTO.getEmail());
         }
 
         // Kiểm tra office tồn tại
         Office office = officeRepository.findById(createDTO.getOfficeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy văn phòng với ID: " + createDTO.getOfficeId()));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + createDTO.getOfficeId() + " のオフィスが見つかりません。"));
 
         Employee employee = new Employee();
         employee.setName(createDTO.getName());
@@ -84,14 +85,14 @@ public class EmployeeService {
         // LOGIC KIỂM TRA QUYỀN
         Employee currentUser = authService.getCurrentUser();
         Employee employeeToUpdate = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ID の従業員が見つかりません: " + id));
 
         // Logic kiểm tra quyền được đặt bên trong khối này vì nó chỉ liên quan đến việc đổi mật khẩu
         if (updateDTO.getPassword() != null && !updateDTO.getPassword().isEmpty()) {
             // Kiểm tra quyền hạn trước khi cho đổi mật khẩu
             if (currentUser.getRole() == Role.MANAGER) {
                 if ((employeeToUpdate.getRole() == Role.ADMIN || employeeToUpdate.getRole() == Role.MANAGER) && !currentUser.getId().equals(employeeToUpdate.getId())) {
-                    throw new SecurityException("Manager không có quyền thay đổi mật khẩu của Admin hoặc Manager khác.");
+                    throw new SecurityException("マネージャーには、他の管理者またはマネージャーのパスワードを変更する権限はありません。");
                 }
             }
             // Nếu là ADMIN, họ có toàn quyền, không cần kiểm tra thêm
@@ -101,15 +102,23 @@ public class EmployeeService {
 
 
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ID の従業員が見つかりません: " + id));
 
         // Kiểm tra email trùng (nếu thay đổi)
         if (!employee.getEmail().equals(updateDTO.getEmail()) &&
                 employeeRepository.existsByEmail(updateDTO.getEmail())) {
-            throw new DuplicateResourceException("Email đã tồn tại: " + updateDTO.getEmail());
+            throw new DuplicateResourceException("電子メールはすでに存在します: " + updateDTO.getEmail());
+        }
+
+        // 1. Kiểm tra username trùng (nếu thay đổi)
+        // LƯU Ý: Thường không nên cho phép đổi username. Nếu cho phép, phải kiểm tra.
+        if (!employeeToUpdate.getUsername().equals(updateDTO.getUsername()) &&
+                employeeRepository.existsByUsername(updateDTO.getUsername())) {
+            throw new DuplicateResourceException("ユーザー名は既に存在します: " + updateDTO.getUsername());
         }
 
         // Cập nhật thông tin cơ bản
+        employeeToUpdate.setUsername(updateDTO.getUsername());
         employee.setName(updateDTO.getName());
         employee.setEmail(updateDTO.getEmail());
         employee.setPhoneNumber(updateDTO.getPhoneNumber());
@@ -123,8 +132,21 @@ public class EmployeeService {
         // Cập nhật office
         if (updateDTO.getOfficeId() != null) {
             Office office = officeRepository.findById(updateDTO.getOfficeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy văn phòng với ID: " + updateDTO.getOfficeId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("ID が見つからないオフィス: " + updateDTO.getOfficeId()));
             employee.setOffice(office);
+        }
+        // 4. Cập nhật Vai trò (Role) với kiểm tra bảo mật
+        // Kiểm tra xem có yêu cầu thay đổi vai trò không
+        if (updateDTO.getRole() != null && !updateDTO.getRole().equals(employeeToUpdate.getRole())) {
+            // Có yêu cầu thay đổi vai trò. Bây giờ kiểm tra quyền.
+
+            // Nếu người dùng hiện tại không phải là ADMIN, ném ra lỗi
+            if (currentUser.getRole() != Role.ADMIN) {
+                throw new PermissionDeniedException("ユーザーロールを変更する権限がありません。この操作を実行できるのは ADMIN のみです。");
+            }
+
+            // Nếu là ADMIN, tiến hành cập nhật
+            employeeToUpdate.setRole(updateDTO.getRole());
         }
 
         // Chỉ cập nhật mật khẩu nếu người dùng nhập mật khẩu mới (không rỗng)
@@ -137,18 +159,45 @@ public class EmployeeService {
     }
 
     public void deleteEmployee(Long employeeId) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + employeeId));
+        // Lấy thông tin người dùng đang thực hiện hành động xóa
+        Employee currentUser = authService.getCurrentUser();
 
-        // Xóa avatar khi xóa employee
-        if (employee.getAvatar() != null && !employee.getAvatar().isEmpty()) {
-            fileUploadService.deleteAvatar(employee.getAvatar());
+        // Lấy thông tin người dùng sắp bị xóa
+        Employee employeeToDelete = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("ID の従業員が見つかりません: " + employeeId));
+
+        // --- BẮT ĐẦU LOGIC KIỂM TRA PHÂN QUYỀN CHẶT CHẼ ---
+
+        // Quy tắc 1: Bất kỳ ai cũng không được tự xóa chính mình.
+        if (currentUser.getId().equals(employeeToDelete.getId())) {
+            throw new PermissionDeniedException("自分のアカウントを削除することはできません.");
         }
 
-        employeeRepository.delete(employee);
+        // Quy tắc 2: Phân quyền dựa trên vai trò của người thực hiện (currentUser)
+        switch (currentUser.getRole()) {
+            case ADMIN:
+                // ADMIN có quyền xóa tất cả (trừ chính mình đã được kiểm tra ở trên).
+                // Không cần làm gì thêm, cho phép tiến hành xóa.
+                break;
+
+            case MANAGER:
+                // MANAGER chỉ được xóa nhân viên có vai trò USER.
+                // Nếu người sắp bị xóa là ADMIN hoặc MANAGER khác, ném ra lỗi.
+                if (employeeToDelete.getRole() == Role.ADMIN || employeeToDelete.getRole() == Role.MANAGER) {
+                    throw new PermissionDeniedException("マネージャーには、他のマネージャーまたは管理者のアカウントを削除する権限はありません。");
+                }
+                break;
+        }
+
+        // Nếu tất cả các kiểm tra quyền hạn đều vượt qua, tiến hành xóa
+        // Xóa avatar của nhân viên nếu có
+        if (employeeToDelete.getAvatar() != null && !employeeToDelete.getAvatar().isEmpty()) {
+            fileUploadService.deleteAvatar(employeeToDelete.getAvatar());
+        }
+
+        // Xóa nhân viên khỏi cơ sở dữ liệu
+        employeeRepository.delete(employeeToDelete);
     }
-
-
     //thông kê trạng thái
     public Map<String, Object> getStatistics() {
         Map<String, Object> stats = new HashMap<>();
@@ -197,41 +246,33 @@ public class EmployeeService {
 
     public void changePassword(Long employeeId, PasswordChangeDTO passwordChangeDTO) {
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + employeeId));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + employeeId + " の従業員が見つかりません。"));
 
         // Kiểm tra mật khẩu hiện tại
         if (!passwordEncoder.matches(passwordChangeDTO.getCurrentPassword(), employee.getPassword())) {
-            throw new IllegalArgumentException("Mật khẩu hiện tại không đúng");
+            throw new IllegalArgumentException("現在のパスワードが正しくありません。");
         }
 
         // Kiểm tra mật khẩu mới và xác nhận khớp nhau
         if (!passwordChangeDTO.getNewPassword().equals(passwordChangeDTO.getConfirmPassword())) {
-            throw new IllegalArgumentException("Mật khẩu mới và xác nhận mật khẩu không khớp");
+            throw new IllegalArgumentException("新しいパスワードと確認用パスワードが一致しません。");
         }
 
         // Cập nhật mật khẩu mới
         employee.setPassword(passwordEncoder.encode(passwordChangeDTO.getNewPassword()));
         employeeRepository.save(employee);
     }
-
     public void changePassword(Long employeeId, ResetPasswordRequestDTO passwordResetToken) {
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + employeeId));
-
-
-
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + employeeId + " の従業員が見つかりません。"));
         // Kiểm tra mật khẩu mới và xác nhận khớp nhau
         if (!passwordResetToken.getPassword().equals(passwordResetToken.getComfirmPass())) {
-            throw new IllegalArgumentException("Mật khẩu mới và xác nhận mật khẩu không khớp");
+            throw new IllegalArgumentException("新しいパスワードと確認用パスワードが一致しません。");
         }
-
         // Cập nhật mật khẩu mới
         employee.setPassword(passwordEncoder.encode(passwordResetToken.getPassword()));
         employeeRepository.save(employee);
     }
-
-
-
     public EmployeeDTO updateEmployeeAvatar(Long employeeId, String avatarFilename) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + employeeId));
@@ -246,7 +287,4 @@ public class EmployeeService {
 
         return convertToDTO(savedEmployee);
     }
-
-
 }
-

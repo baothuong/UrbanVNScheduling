@@ -24,6 +24,9 @@ public class Office {
 
     private String address;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     @OneToMany(mappedBy = "office")
     private List<Employee> employees = new ArrayList<>();
 }

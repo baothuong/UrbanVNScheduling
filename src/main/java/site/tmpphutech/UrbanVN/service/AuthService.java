@@ -1,7 +1,12 @@
 // AuthService.java
 package site.tmpphutech.UrbanVN.service;
 
-
+import site.tmpphutech.UrbanVN.dto.LoginRequestDTO;
+import site.tmpphutech.UrbanVN.dto.LoginResponseDTO;
+import site.tmpphutech.UrbanVN.dto.EmployeeDTO;
+import site.tmpphutech.UrbanVN.exception.InvalidCredentialsException;
+import site.tmpphutech.UrbanVN.model.Employee;
+import site.tmpphutech.UrbanVN.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,12 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import site.tmpphutech.UrbanVN.dto.EmployeeDTO;
-import site.tmpphutech.UrbanVN.dto.LoginRequestDTO;
-import site.tmpphutech.UrbanVN.dto.LoginResponseDTO;
-import site.tmpphutech.UrbanVN.exception.InvalidCredentialsException;
-import site.tmpphutech.UrbanVN.model.Employee;
-import site.tmpphutech.UrbanVN.repository.EmployeeRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Service
 @RequiredArgsConstructor
@@ -41,17 +42,17 @@ public class AuthService {
 
             // Lấy thông tin employee
             Employee employee = employeeRepository.findByUsername(loginRequest.getUsername())
-                    .orElseThrow(() -> new InvalidCredentialsException("Thông tin đăng nhập không hợp lệ"));
+                    .orElseThrow(() -> new InvalidCredentialsException("無効なログイン情報"));
 
             // Tạo response
             LoginResponseDTO response = new LoginResponseDTO();
-            response.setMessage("Đăng nhập thành công");
+            response.setMessage("ログインに成功しました");
             response.setEmployee(convertToEmployeeDTO(employee));
 
             return response;
 
         } catch (BadCredentialsException e) {
-            throw new InvalidCredentialsException("Tên đăng nhập hoặc mật khẩu không đúng");
+            throw new InvalidCredentialsException("ユーザー名またはパスワードが間違っています");
         }
     }
 
@@ -71,6 +72,7 @@ public class AuthService {
         }
         return null;
     }
+
 
 
     public boolean isCurrentUserAdmin() {

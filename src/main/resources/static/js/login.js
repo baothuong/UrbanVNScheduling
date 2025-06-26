@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginButton.disabled = true;
         loginButtonText.textContent = 'ログイン中...';
         loginSpinner.classList.remove('hidden');
+        loginSpinner.classList.add('fa-spin');
 
         try {
             // QUAN TRỌNG: Gọi API với đường dẫn tương đối
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginButton.disabled = false;
             loginButtonText.textContent = 'ログイン';
             loginSpinner.classList.add('hidden');
+            loginSpinner.classList.remove('fa-spin');
         }
     });
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
@@ -157,12 +159,14 @@ document.addEventListener('DOMContentLoaded', () => {
             resetPasswordButton.disabled = true;
             resetButtonText.textContent = '送信中...';
             resetSpinner.classList.remove('hidden');
+            resetSpinner.classList.add('fa-spin');
           }
 
           function resetLoadingState() {
             resetPasswordButton.disabled = false;
             resetButtonText.textContent = 'リクエストを送信';
             resetSpinner.classList.add('hidden');
+            resetSpinner.classList.remove('fa-spin');
           }
 
           async function handleForgotPassword() {
@@ -184,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setLoadingState();
 
             try {
-              /*const response = await fetch('http://localhost:8080/api/auth/forget-password', {
+              const response = await fetch('/api/auth/forget-password', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -192,17 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 credentials: 'include',
                 body: JSON.stringify({ email: email })
-              });*/
-
-              const response = await fetch('/api/auth/forget-password', {
-                              method: 'POST',
-                              headers: {
-                                  'Content-Type': 'application/json',
-                                  'Accept': 'application/json'
-                              },
-                              credentials: 'include',
-                              body: JSON.stringify({ email: email })
-                          });
+              });
 
               const responseText = await response.text();
 

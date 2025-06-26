@@ -3,6 +3,7 @@ package site.tmpphutech.UrbanVN.service;
 import site.tmpphutech.UrbanVN.dto.ScheduleCreateDTO;
 import site.tmpphutech.UrbanVN.dto.ScheduleDTO;
 import site.tmpphutech.UrbanVN.dto.ScheduleUpdateDTO;
+import site.tmpphutech.UrbanVN.enums.ScheduleStatus;
 import site.tmpphutech.UrbanVN.enums.WorkType;
 import site.tmpphutech.UrbanVN.exception.ResourceNotFoundException;
 import site.tmpphutech.UrbanVN.exception.InvalidScheduleException;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,10 +45,10 @@ public class ScheduleService {
         );
 
         Employee employee = employeeRepository.findById(createDTO.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + createDTO.getEmployeeId()));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + createDTO.getEmployeeId() + " の従業員が見つかりません。"));
 
         Office office = officeRepository.findById(createDTO.getOfficeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy văn phòng với ID: " + createDTO.getOfficeId()));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + createDTO.getOfficeId() + " のオフィスが見つかりません。"));
 
         Schedule schedule = new Schedule();
         schedule.setEmployee(employee);
@@ -64,7 +66,7 @@ public class ScheduleService {
 
     public ScheduleDTO updateSchedule(Long id, ScheduleUpdateDTO updateDTO) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch làm việc với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + id + " の勤務スケジュールが見つかりません。"));
 
         // <<< THAY ĐỔI / THÊM MỚI >>>
         // Lấy thông tin mới hoặc giữ lại thông tin cũ nếu không được cung cấp
@@ -101,7 +103,7 @@ public class ScheduleService {
 
         if (updateDTO.getOfficeId() != null) {
             Office office = officeRepository.findById(updateDTO.getOfficeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy văn phòng với ID: " + updateDTO.getOfficeId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("ID: " + updateDTO.getOfficeId() + " のオフィスが見つかりません。"));
             schedule.setOffice(office);
         }
         if (updateDTO.getNotes() != null) {
@@ -109,7 +111,7 @@ public class ScheduleService {
         }
         if (updateDTO.getEmployeeId() != null && !updateDTO.getEmployeeId().equals(schedule.getEmployee().getId())) {
             Employee newEmployee = employeeRepository.findById(updateDTO.getEmployeeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên mới với ID: " + updateDTO.getEmployeeId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("ID: " + updateDTO.getEmployeeId() + " の新しい従業員が見つかりません。"));
             schedule.getEmployee().getSchedules().remove(schedule);
             schedule.setEmployee(newEmployee);
             newEmployee.getSchedules().add(schedule);
@@ -126,7 +128,15 @@ public class ScheduleService {
     private void validateScheduleLogic(Long employeeId, LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, WorkType workType, Long scheduleIdToExclude) {
         // --- CÁC KIỂM TRA CƠ BẢN ---
         if (endDate.isBefore(startDate)) {
-            throw new InvalidScheduleException("Ngày kết thúc không thể trước ngày bắt đầu.");
+            throw new InvalidScheduleException("終了日は開始日より前に設定できません。");
+        }
+       // Áp dụng kiểm tra quá khứ cho cả TẠO MỚI và CẬP NHẬT
+        LocalDate today = LocalDate.now();
+        if (startDate.isBefore(today)) {
+            throw new InvalidScheduleException("過去の日付にスケジュールを設定することはできません。");
+        }
+        if (startTime != null && startDate.isEqual(today) && startTime.isBefore(LocalTime.now().minusMinutes(1))) {
+            throw new InvalidScheduleException("本日の既に過ぎた時間にスケジュールを設定することはできません。");
         }
 
         // --- XỬ LÝ THEO LOẠI CÔNG VIỆC ---
@@ -136,32 +146,38 @@ public class ScheduleService {
             case OVERTIME:
                 // Các loại công việc CÓ GIỜ CỤ THỂ
                 if (startTime == null || endTime == null) {
-                    throw new InvalidScheduleException("Với loại công việc này, giờ bắt đầu và kết thúc là bắt buộc.");
+                    throw new InvalidScheduleException("この勤務タイプでは、開始時刻と終了時刻が必須です。");
                 }
                 if (!startDate.isEqual(endDate)) {
-                    throw new InvalidScheduleException("Loại công việc này chỉ có thể diễn ra trong một ngày.");
+                    throw new InvalidScheduleException("この勤務タイプは1日のみ有効です。");
                 }
                 if (!endTime.isAfter(startTime)) {
-                    throw new InvalidScheduleException("Giờ kết thúc phải sau giờ bắt đầu.");
+                    throw new InvalidScheduleException("終了時刻は開始時刻より後に設定する必要があります。"); // Đã có sẵn
+                }
+
+                //  Không cho tạo lịch trong quá khứ của ngày hôm nay
+                LocalTime now = LocalTime.now();
+                if (startDate.isEqual(today) && startTime.isBefore(now)) {
+                    // Chỉ áp dụng cho việc tạo mới (scheduleIdToExclude == 0L)
+                    if (scheduleIdToExclude == 0L) {
+                        throw new InvalidScheduleException("本日の既に過ぎた時間にスケジュールを設定することはできません。");
+                    }
                 }
 
                 // Kiểm tra xung đột với các lịch trình CÓ GIỜ khác trong cùng ngày
                 List<Schedule> overlappingTimeSchedules = scheduleRepository.findOverlappingSchedules(
                         employeeId, startDate, startTime, endTime, scheduleIdToExclude);
                 if (!overlappingTimeSchedules.isEmpty()) {
-                    throw new InvalidScheduleException("Lịch trình bị chồng chéo thời gian với một lịch trình khác trong ngày.");
+                    throw new InvalidScheduleException("その日の他のスケジュールと時間が重複しています。");
                 }
 
                 // Kiểm tra xung đột với các lịch trình CẢ NGÀY (Nghỉ phép/Công tác)
                 List<Schedule> conflictingAllDaySchedules = scheduleRepository.findAnyScheduleInDateRange(
                         employeeId, startDate, endDate, scheduleIdToExclude);
-
-                // Lọc ra các sự kiện là VACATION hoặc BUSINESS_TRIP
                 boolean hasConflictWithAllDayEvent = conflictingAllDaySchedules.stream()
                         .anyMatch(s -> s.getWorkType() == WorkType.VACATION || s.getWorkType() == WorkType.BUSINESS_TRIP);
-
                 if(hasConflictWithAllDayEvent) {
-                    throw new InvalidScheduleException("Không thể tạo lịch làm việc trong ngày nhân viên đang nghỉ phép hoặc đi công tác.");
+                    throw new InvalidScheduleException("従業員が休暇中または出張中の日には勤務スケジュールを作成できません。");
                 }
                 break;
 
@@ -169,14 +185,14 @@ public class ScheduleService {
             case BUSINESS_TRIP:
                 // Các loại công việc CẢ NGÀY
                 if (startTime != null || endTime != null) {
-                    throw new InvalidScheduleException("Nghỉ phép và công tác là sự kiện cả ngày, không cần giờ cụ thể.");
+                    throw new InvalidScheduleException("休暇および出張は終日イベントであり、特定の時間は必要ありません。");
                 }
 
                 // Kiểm tra xem có bất kỳ lịch trình nào khác (có giờ hoặc cả ngày) tồn tại trong khoảng thời gian này không
                 List<Schedule> anyExistingSchedules = scheduleRepository.findAnyScheduleInDateRange(
                         employeeId, startDate, endDate, scheduleIdToExclude);
                 if (!anyExistingSchedules.isEmpty()) {
-                    throw new InvalidScheduleException("Lịch nghỉ phép/công tác bị xung đột với một lịch trình đã tồn tại.");
+                    throw new InvalidScheduleException("休暇/出張スケジュールが既存のスケジュールと重複しています。");
                 }
                 break;
         }
@@ -189,7 +205,7 @@ public class ScheduleService {
 
     public List<ScheduleDTO> getSchedulesByEmployee(Long employeeId, LocalDate startDate, LocalDate endDate) {
         if (!employeeRepository.existsById(employeeId)) {
-            throw new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + employeeId);
+            throw new ResourceNotFoundException("ID: " + employeeId + " の従業員が見つかりません。");
         }
         List<Schedule> schedules = scheduleRepository.findSchedulesForEmployeeInDateRange(employeeId, startDate, endDate);
         return schedules.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -197,13 +213,46 @@ public class ScheduleService {
 
     public ScheduleDTO getScheduleById(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch làm việc với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + id + " の勤務スケジュールが見つかりません。"));
         return convertToDTO(schedule);
     }
 
+    public void cancelSchedule(Long id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + id + " の勤務スケジュールが見つかりません。"));
+
+        // Tạo thời điểm kết thúc chính xác của sự kiện
+        LocalDateTime scheduleEndDateTime = schedule.getEndDate().atTime(
+                schedule.getEndTime() != null ? schedule.getEndTime() : LocalTime.MAX
+        );
+
+        // So sánh với thời điểm hiện tại
+        if (scheduleEndDateTime.isAfter(LocalDateTime.now())) {
+            throw new InvalidScheduleException("実際に終了したイベントのみキャンセルできます。");
+        }
+
+        if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
+            throw new InvalidScheduleException("このイベントは既にキャンセルされています。");
+        }
+
+        schedule.setStatus(ScheduleStatus.CANCELLED);
+        scheduleRepository.save(schedule);
+    }
+
     public void deleteSchedule(Long id) {
-        if (!scheduleRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Không tìm thấy lịch làm việc với ID: " + id);
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ID: " + id + " の勤務スケジュールが見つかりません。"));
+
+        if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
+            throw new InvalidScheduleException("キャンセルされたイベントは削除できません。");
+        }
+        LocalDateTime scheduleStartDateTime = schedule.getStartDate().atTime(
+                schedule.getStartTime() != null ? schedule.getStartTime() : LocalTime.MIN
+        );
+
+        // Nếu sự kiện đã bắt đầu, không cho xóa
+        if (scheduleStartDateTime.isBefore(LocalDateTime.now())) {
+            throw new InvalidScheduleException("既に開始または進行中のイベントは削除できません。キャンセルしてください。");
         }
         scheduleRepository.deleteById(id);
     }
@@ -223,6 +272,8 @@ public class ScheduleService {
         dto.setEndTime(schedule.getEndTime());
         dto.setWorkType(schedule.getWorkType());
         dto.setNotes(schedule.getNotes());
+        dto.setStatus(schedule.getStatus());
+
         return dto;
     }
 }

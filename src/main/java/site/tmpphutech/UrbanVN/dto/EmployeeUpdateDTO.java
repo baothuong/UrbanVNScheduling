@@ -6,29 +6,36 @@ import site.tmpphutech.UrbanVN.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
 public class EmployeeUpdateDTO {
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank (message = "氏名を入力してください。")
     private String name;
 
-    @Email(message = "Email không hợp lệ")
-    @NotBlank(message = "Email không được để trống")
+    @NotBlank(message = "ユーザー名を入力してください。")
+    @Pattern(regexp = "^\\S*$", message = "ユーザー名に空白文字は使用できません。")
+    private String username;
+
+    @Email(message = "メールアドレスの形式が正しくありません。")
+    @NotBlank(message = "メールアドレスを入力してください。")
+    @Pattern(regexp = "^\\S*$", message = "メールアドレスに空白文字は使用できません。")
     private String email;
 
     private String phoneNumber;
     private Gender gender;
     private String address;
 
-    @NotNull(message = "Chức vụ không được để trống")
+    @NotNull(message = "役職を選択してください。")
     private Position position;
 
-    @NotNull(message = "Văn phòng không được để trống")
+    @NotNull(message = "オフィスを選択してください。")
     private Long officeId;
 
     private String avatar;
     private Role role;
+
+    @Pattern(regexp = "^\\S*$", message = "パスワードに空白文字は使用できません。")
     private String password;
 }
-

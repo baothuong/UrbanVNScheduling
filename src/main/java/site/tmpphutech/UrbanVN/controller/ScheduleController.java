@@ -74,5 +74,12 @@ public class ScheduleController {
         scheduleService.deleteSchedule(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or @scheduleService.getScheduleById(#id).getEmployeeId() == @authService.getCurrentUser().getId()")
+    public ResponseEntity<Void> cancelSchedule(@PathVariable Long id) {
+        scheduleService.cancelSchedule(id);
+        return ResponseEntity.noContent().build();
+    }
 }
 

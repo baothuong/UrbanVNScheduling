@@ -10,13 +10,27 @@
     right: 20px;
     padding: 1rem;
     border-radius: 0.375rem;
-    color: red;
-    z-index: 9999;
+    color: black;
+    z-index: 99999;
     display: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Thêm chút bóng đổ cho đẹp */
+
 }
-.alert-success { background-color: #34D399; }
-.alert-info { background-color: #60A5FA; }
-.alert-warning { background-color: #FBBF24; }
+.alert-success {
+    background-color: #34D399; /* Xanh lá */
+}
+
+.alert-info {
+    background-color: #60A5FA; /* Xanh dương */
+}
+
+.alert-warning {
+    background-color: #FBBF24; /* Vàng */
+}
+
+.alert-error {
+    background-color: #EF4444; /* Đỏ */
+}
 .tab-button {
     padding: 0.75rem 1.5rem;
     cursor: pointer;
@@ -71,4 +85,15 @@
 
     /* Flexboxで垂直方向中央揃えを実現する魔法のプロパティ */
     align-items: center;
+}
+
+.event-cancelled {
+    background-color: #A0AEC0 !important; /* Màu xám */
+    border-color: #718096 !important;
+    text-decoration: line-through; /* Gạch ngang */
+    opacity: 0.7;
+}
+
+.event-cancelled .fc-event-title {
+    color: #4A5568 !important; /* Chữ tối hơn để dễ đọc */
 }

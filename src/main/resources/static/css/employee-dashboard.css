@@ -9,7 +9,7 @@
         padding: 1rem;
         border-radius: 0.375rem;
         color: white;
-        z-index: 100;
+        z-index: 99999;
         display: none;
     }
 
@@ -67,4 +67,17 @@
             display: flex;
             justify-content: center;
         }
+    }
+    .fc-event.event-cancelled {
+        /* Sử dụng màu xám nhạt làm nền để làm mờ sự kiện */
+        background-color: #D1D5DB !important; /* Tailwind gray-300 */
+        border-color: #9CA3AF !important;   /* Tailwind gray-400 */
+    }
+
+    /* Áp dụng cho phần tiêu đề (text) của sự kiện */
+    .fc-event.event-cancelled .fc-event-title {
+        /* Thêm hiệu ứng gạch ngang */
+        text-decoration: line-through;
+        /* Đổi màu chữ thành màu xám đậm hơn để dễ đọc trên nền nhạt */
+        color: #6B7280; /* Tailwind gray-500 */
     }

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ログイン - Urban Work Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
@@ -134,7 +134,8 @@
               ></i>
             </span>
                 <span id="loginButtonText">ログイン</span>
-                <i class="fas fa-spinner fa-spin ml-2 hidden" id="loginSpinner"></i>
+
+                <i class="fas fa-spinner spinner-loading ml-2 hidden" id="loginSpinner"></i>
             </button>
         </div>
     </form>
@@ -196,10 +197,8 @@
                         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                     <span id="resetButtonText">リクエストを送信</span>
-                    <i
-                            class="fas fa-spinner fa-spin ml-2 hidden"
-                            id="resetSpinner"
-                    ></i>
+                    <i class="fas fa-spinner spinner-loading ml-2 hidden" id="resetSpinner"></i>
+
                 </button>
             </div>
         </form>
