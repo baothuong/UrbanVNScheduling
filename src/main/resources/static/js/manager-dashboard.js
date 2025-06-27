@@ -1699,6 +1699,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
         } else {
+            employeeIdInput.value =' ';
             employeeModalTitle.textContent = '新規従業員を追加';
             employeePasswordInput.required = true;
             document.getElementById('employee-password-help').textContent = '新規作成時にはパスワードは必須です。';
