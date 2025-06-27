@@ -68,6 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
+
+    const handleSuccessfulUpdate = (message) => {
+        showAlert(message, 'success');
+        closeEventModal();
+        config.calendar.refetchEvents();
+        loadUpcomingSchedules();
+    };
+
     const setEventFormState = (enabled) => {
         const formElements = eventForm.querySelectorAll('input, select, textarea, button');
         formElements.forEach(el => {
@@ -129,66 +137,111 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+     const getScheduleState = (schedule) => {
+            const now = new Date();
+            const scheduleStartDateTime = new Date(`${schedule.startDate}T${schedule.startTime || '00:00:00'}`);
+            const scheduleEndDateTime = new Date(`${schedule.endDate}T${schedule.endTime || '23:59:59'}`);
+
+            if (scheduleEndDateTime < now) {
+                return 'FINISHED';
+            }
+            if (scheduleStartDateTime <= now && now <= scheduleEndDateTime) {
+                return 'IN_PROGRESS';
+            }
+            return 'UPCOMING';
+        };
+
+        const setFormPermissions = (state) => {
+            const allElements = eventForm.querySelectorAll('input, select, textarea');
+            const saveBtn = eventForm.querySelector('button[type="submit"]');
+            const deleteBtn = document.getElementById('delete-btn');
+
+            // Reset to default state first
+            allElements.forEach(el => {
+                el.disabled = false;
+                el.readOnly = false;
+                el.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            });
+            saveBtn.style.display = 'inline-block';
+            deleteBtn.style.display = 'inline-block';
+            deleteBtn.disabled = false;
+
+            switch (state) {
+                case 'IN_PROGRESS':
+                    const fieldsToLock = ['event-type', 'event-start-date', 'event-start-time', 'event-office'];
+                    fieldsToLock.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.disabled = true;
+                            el.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        }
+                    });
+                    deleteBtn.disabled = true;
+                    deleteBtn.title = "Không thể xóa lịch trình đang diễn ra.";
+                    break;
+                case 'FINISHED':
+                case 'CANCELLED':
+                    allElements.forEach(el => {
+                        el.disabled = true;
+                        el.readOnly = true;
+                        el.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    });
+                    saveBtn.style.display = 'none';
+                    deleteBtn.style.display = 'none';
+
+                    break;
+            }
+        };
+
     // =================================================================
     // == 4. CORE LOGIC & INITIALIZATION FUNCTIONS
     // =================================================================
 
     const openEventModal = (event = null, startDateStr = null, endDateStr = null, preselectedWorkType = null) => {
         eventForm.reset();
-        const startDateInput = document.getElementById('event-start-date');
-        const endDateInput = document.getElementById('event-end-date');
 
-        setFormReadOnly(false);
-        document.getElementById('delete-btn').classList.add('hidden');
-
-        if (event) { // View/Edit Mode
+        if (event) { // Chế độ xem/sửa
             const props = event.extendedProps;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const eventStartDate = new Date(props.startDate);
-
             document.getElementById('event-id').value = event.id;
             document.getElementById('event-notes').value = props.notes || '';
-            startDateInput.value = props.startDate;
-            endDateInput.value = props.endDate;
+            document.getElementById('event-start-date').value = props.startDate;
+            document.getElementById('event-end-date').value = props.endDate;
             document.getElementById('event-start-time').value = props.startTime || '';
             document.getElementById('event-end-time').value = props.endTime || '';
-            eventTypeSelect.value = props.workType;
-            document.getElementById('event-office').value = props.officeId || config.currentUser.officeId;
+            document.getElementById('event-type').value = props.workType;
+            document.getElementById('event-office').value = props.officeId;
 
             updateEventFormUI(props.workType);
 
-            if (eventStartDate < today || props.status === 'CANCELLED') {
-                modalTitle.textContent = props.status === 'CANCELLED' ?
-                    'キャンセルされたスケジュール (Lịch trình đã hủy)' :
-                    '過去のスケジュールの詳細 (Chi tiết lịch trình quá khứ)';
-                setFormReadOnly(true);
-            } else {
-                modalTitle.textContent = 'スケジュールを編集 (Chỉnh sửa Lịch trình)';
-                document.getElementById('delete-btn').classList.remove('hidden');
-                setEventFormState(true);
+            const state = props.status === 'CANCELLED' ? 'CANCELLED' : getScheduleState(props);
+
+            switch (state) {
+                case 'UPCOMING':
+                    modalTitle.textContent = 'スケジュールを編集 (Chỉnh sửa Lịch trình)';
+                    break;
+                case 'IN_PROGRESS':
+                    modalTitle.textContent = '進行中のスケジュール (Lịch trình đang diễn ra)';
+                    break;
+                case 'FINISHED':
+                    modalTitle.textContent = '過去のスケジュール (Lịch trình đã kết thúc)';
+                    break;
+                case 'CANCELLED':
+                    modalTitle.textContent = 'キャンセルされたスケジュール (Lịch trình đã hủy)';
+                    break;
             }
-        } else { // Create Mode
+            setFormPermissions(state);
+        } else { // Chế độ thêm mới
             modalTitle.textContent = 'スケジュールを追加 (Thêm Lịch trình)';
             document.getElementById('event-id').value = '';
-            document.getElementById('delete-btn').classList.add('hidden');
+            document.getElementById('event-start-date').value = startDateStr || getTodayString();
+            document.getElementById('event-end-date').value = endDateStr || startDateStr || getTodayString();
+            document.getElementById('event-office').value = config.currentUser.officeId || '';
+            document.getElementById('event-type').value = preselectedWorkType || '';
 
-            const todayStr = getTodayString();
-            startDateInput.value = startDateStr || todayStr;
-            endDateInput.value = endDateStr || startDateStr || todayStr;
-            document.getElementById('event-office').value = config.currentUser.officeId;
-
-            eventTypeSelect.value = preselectedWorkType || '';
-
-            if (preselectedWorkType) {
-                setEventFormState(true);
-                updateEventFormUI(preselectedWorkType);
-            } else {
-                setEventFormState(false);
-                updateEventFormUI(null);
-            }
+            updateEventFormUI(preselectedWorkType);
+            setFormPermissions('UPCOMING');
+            setEventFormState(!!preselectedWorkType);
         }
-
         eventModal.classList.remove('hidden');
     };
 
@@ -248,8 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-gray-50 rounded-md';
                 div.innerHTML = `
-                   <p class="font-medium text-gray-700">${new Date(s.startDate).toLocaleDateString('ja-JP', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
-                   <p class="text-sm text-gray-500">${workTypeNames[s.workType] || s.workType} | ${s.officeName}</p>
+                    <p class="font-medium text-gray-700">${new Date(s.startDate).toLocaleDateString('ja-JP', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
+                    <p class="text-sm text-gray-500">${workTypeNames[s.workType] || s.workType} | ${s.officeName}</p>
                 `;
                 upcomingSchedulesList.appendChild(div);
             });
@@ -288,20 +341,56 @@ document.addEventListener('DOMContentLoaded', () => {
             editable: true,
             selectable: true,
             selectMirror: true,
-
-            // ### THAY ĐỔI NẰM Ở ĐÂY ###
-            // Mặc định sẽ không hiển thị giờ (cho Month view)
             displayEventTime: false,
-
-            // Nhưng sẽ ghi đè lại cho các view Tuần và Ngày
             views: {
-                timeGridWeek: {
-                    displayEventTime: true // Bật hiển thị giờ
-                },
-                timeGridDay: {
-                    displayEventTime: true // Bật hiển thị giờ
-                }
+                timeGridWeek: { displayEventTime: true },
+                timeGridDay: { displayEventTime: true }
             },
+
+            // <<< CẢI TIẾN: THÊM TOOLTIP KHI DI CHUỘT VÀO SỰ KIỆN >>>
+           eventDidMount: function(info) {
+               // Lấy các thông tin cần thiết từ event
+               const props = info.event.extendedProps;
+               const workTypeTranslations = { NORMAL: '通常勤務', BUSINESS_TRIP: '出張', VACATION: '休暇', OUTSIDE: '外出', OVERTIME: '残業' };
+               const workTypeName = workTypeTranslations[props.workType] || props.workType;
+               const notes = props.notes || '<em>なし</em>';
+               const officeName = props.officeName || '<em>未定</em>';
+
+               let timeOrDateHTML = '';
+               if (props.startDate === props.endDate) {
+                   if (props.startTime) {
+                       timeOrDateHTML = `<p class="text-xs text-gray-600 mt-1"><strong>時間:</strong> ${props.startTime.substring(0, 5)} - ${props.endTime.substring(0, 5)}</p>`;
+                   }
+               } else {
+                   const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                   const formattedStartDate = new Date(props.startDate).toLocaleDateString('ja-JP', options);
+                   const formattedEndDate = new Date(props.endDate).toLocaleDateString('ja-JP', options);
+                   timeOrDateHTML = `<p class="text-xs text-gray-600 mt-1"><strong>期間:</strong> ${formattedStartDate} - ${formattedEndDate}</p>`;
+               }
+
+               // --- KẾT THÚC LOGIC ---
+
+               // Sử dụng thư viện Tippy.js để tạo tooltip
+               tippy(info.el, {
+                   content: `
+                       <div class="p-1 text-left">
+                           <p class="font-bold text-blue-500 mb-1">
+                               ${workTypeName}
+                           </p>
+                           ${timeOrDateHTML} <p class="text-xs text-gray-600 mt-1">
+                               <strong>備考:</strong> ${notes}
+                           </p>
+                           <p class="text-xs text-gray-600 mt-1">
+                               <strong>オフィス:</strong> ${officeName}
+                           </p>
+                       </div>
+                   `,
+                   allowHTML: true,
+                   placement: 'top',
+                   animation: 'shift-away-subtle',
+                   theme: 'urban-blue',
+               });
+           },
 
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
@@ -311,28 +400,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!response.ok) throw new Error('Failed to fetch events');
                     const schedules = await response.json();
                     const events = schedules.map(s => {
-                        let eventTitle;
-                        const originalTitle = s.notes || workTypeTranslations[s.workType] || s.workType;
-                        // For month view, just show title. For week/day, show time + title
-                        if (config.calendar.view.type.startsWith('timeGrid')) {
-                           if (s.startTime && s.endTime) {
-                                eventTitle = `${s.startTime.substring(0, 5)} - ${originalTitle}`;
-                           } else {
-                                eventTitle = originalTitle;
-                           }
-                        } else {
-                            if (s.startTime && s.endTime) {
-                                eventTitle = `${s.startTime.substring(0, 5)} - ${s.endTime.substring(0, 5)}`;
-                                if (s.startDate !== s.endDate && originalTitle) eventTitle += ` - ${originalTitle}`;
+                        // <<< CẢI TIẾN 3: ĐƠN GIẢN HÓA LOGIC TẠO TIÊU ĐỀ SỰ KIỆN >>>
+                        const workTypeName = workTypeTranslations[s.workType] || s.workType;
+                        const titleText = s.notes || workTypeName;
+                        let eventTitle = titleText;
+
+                        if (s.startTime) {
+                            if (config.calendar.view.type.startsWith('timeGrid')) {
+                                eventTitle = `${s.startTime.substring(0, 5)} - ${titleText}`;
                             } else {
-                                eventTitle = originalTitle;
+                                eventTitle = `${s.startTime.substring(0, 5)} ${titleText}`;
                             }
                         }
 
                         let eventEnd;
-                        if(s.startTime) { // Sự kiện có giờ
+                        if(s.startTime) {
                             eventEnd = `${s.endDate}T${s.endTime}`;
-                        } else { // Sự kiện cả ngày
+                        } else {
                             const calendarEndDate = new Date(s.endDate);
                             calendarEndDate.setDate(calendarEndDate.getDate() + 1);
                             eventEnd = toLocalISOString(calendarEndDate);
@@ -357,50 +441,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             eventClick: (info) => openEventModal(info.event),
-
             select: (info) => {
                 const durationInMs = info.end.getTime() - info.start.getTime();
                 const durationInDays = durationInMs / (1000 * 60 * 60 * 24);
-
-                let preselectedWorkType = 'NORMAL';
-                if (durationInDays > 1) {
-                    preselectedWorkType = 'BUSINESS_TRIP';
-                }
-
+                let preselectedWorkType = durationInDays > 1 ? 'BUSINESS_TRIP' : 'NORMAL';
                 const actualEndDate = new Date(info.end);
                 actualEndDate.setDate(actualEndDate.getDate() - 1);
-
-                openEventModal(
-                    null,
-                    toLocalISOString(info.start),
-                    toLocalISOString(actualEndDate),
-                    preselectedWorkType
-                );
-
+                openEventModal(null, toLocalISOString(info.start), toLocalISOString(actualEndDate), preselectedWorkType);
                 config.calendar.unselect();
             },
-
             eventDrop: async (info) => {
-                const { event } = info;
-                const oldDuration = info.oldEvent.end - info.oldEvent.start;
-                const newEndDate = new Date(event.start.getTime() + oldDuration);
-                const inclusiveNewEndDate = new Date(newEndDate);
-                inclusiveNewEndDate.setDate(inclusiveNewEndDate.getDate() - 1);
-
+                const { event, revert } = info;
+                if (!confirm(`このスケジュールを移動してもよろしいですか？`)) {
+                    revert();
+                    return;
+                }
                 try {
-                    const response = await fetchWithAuth(`/api/schedules/${event.id}`, {
-                        method: 'PUT',
-                        body: JSON.stringify({
-                            startDate: toLocalISOString(event.start),
-                            endDate: toLocalISOString(inclusiveNewEndDate)
-                        })
-                    });
-                    if (!response.ok) throw new Error('Failed to update event date');
-                    showAlert('日付が正常に更新されました！', 'success');
-                    config.calendar.refetchEvents();
+                    const originalData = event.extendedProps;
+                    const duration = new Date(originalData.endDate).getTime() - new Date(originalData.startDate).getTime();
+                    const newEndDate = new Date(event.start.getTime() + duration);
+                    const payload = { ...originalData, startDate: toLocalISOString(event.start), endDate: toLocalISOString(newEndDate) };
+                    const response = await fetchWithAuth(`/api/schedules/${event.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || '更新に失敗しました');
+                    }
+                    handleSuccessfulUpdate('スケジュールが正常に更新されました！');
                 } catch (err) {
-                    showAlert('日付の更新中にエラーが発生しました。', 'error');
-                    info.revert();
+                    showAlert(`更新エラー: ${err.message}`, 'error');
+                    revert();
+                }
+            },
+            eventResize: async (info) => {
+                const { event, revert } = info;
+                if (!confirm(`このスケジュールの期間を変更してもよろしいですか？`)) {
+                    revert();
+                    return;
+                }
+                try {
+                    const originalData = event.extendedProps;
+                    const actualEndDate = new Date(event.end);
+                    actualEndDate.setDate(actualEndDate.getDate() - 1);
+                    const payload = { ...originalData, startDate: toLocalISOString(event.start), endDate: toLocalISOString(actualEndDate) };
+                    const response = await fetchWithAuth(`/api/schedules/${event.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || '更新に失敗しました');
+                    }
+                    handleSuccessfulUpdate('スケジュール期間が更新されました！');
+                } catch (err) {
+                    showAlert(`更新エラー: ${err.message}`, 'error');
+                    revert();
                 }
             }
         });
@@ -413,6 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTimeEl.textContent = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
             currentDateEl.textContent = now.toLocaleDateString('ja-JP', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         };
+        // <<< CẢI TIẾN 4: TỐI ƯU HÓA KHỞI TẠO ĐỒNG HỒ >>>
+        // Chạy ngay 1 lần để hiển thị giờ ngay lập tức, không phải chờ 1 giây
         updateTime();
         setInterval(updateTime, 1000);
     };
@@ -502,16 +595,33 @@ document.addEventListener('DOMContentLoaded', () => {
     eventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('event-id').value;
-        const startTime = document.getElementById('event-start-time').value;
-        const endTime = document.getElementById('event-end-time').value;
-        const workType = document.getElementById('event-type').value;
+        const isUpdating = !!id;
 
-        if (workType !== 'VACATION' && workType !== 'BUSINESS_TRIP') {
-            if (startTime && endTime && startTime >= endTime) {
-                showAlert('終了時間は開始時間より後でなければなりません！', 'warning');
-                return;
+        // <<< ĐỒNG BỘ: THÊM VALIDATION KHI TẠO MỚI >>>
+        if (!isUpdating) {
+            const now = new Date();
+            const startDateValue = document.getElementById('event-start-date').value;
+            const startTimeValue = document.getElementById('event-start-time').value;
+            if (startTimeValue) {
+                const scheduleStartDateTime = new Date(`${startDateValue}T${startTimeValue}`);
+                if (scheduleStartDateTime < (now - 60000)) {
+                    showAlert('過去の日付や時間にスケジュールを設定することはできません。', 'warning');
+                    return;
+                }
+            } else {
+                const scheduleStartDate = new Date(startDateValue);
+                const today = new Date();
+                scheduleStartDate.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+                if (scheduleStartDate < today) {
+                    showAlert('過去の日付にスケジュールを設定することはできません。', 'warning');
+                    return;
+                }
             }
         }
+        const workType = document.getElementById('event-type').value;
+        const startTime = document.getElementById('event-start-time').value;
+        const endTime = document.getElementById('event-end-time').value;
 
         const payload = {
             notes: document.getElementById('event-notes').value,
@@ -538,10 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 throw new Error(errorMessage);
             }
-            showAlert(`スケジュールが正常に${id ? '更新' : '作成'}されました。`, 'success');
-            closeEventModal();
-            config.calendar.refetchEvents();
-            loadUpcomingSchedules();
+            // <<< CẢI TIẾN 1: ÁP DỤNG HÀM DÙNG CHUNG >>>
+            handleSuccessfulUpdate(`スケジュールが正常に${id ? '更新' : '作成'}されました。`);
         } catch (error) {
             showAlert(`エラー: ${error.message}`, 'error', 5000);
         }
@@ -556,10 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const errorData = await response.json();
                     throw new Error(errorData.message || '削除に失敗しました');
                 }
-                showAlert('スケジュールが削除されました。', 'success');
-                closeEventModal();
-                config.calendar.refetchEvents();
-                loadUpcomingSchedules();
+                // <<< CẢI TIẾN 1: ÁP DỤNG HÀM DÙNG CHUNG >>>
+                handleSuccessfulUpdate('スケジュールが削除されました。');
             } catch (error) {
                 showAlert(`削除中にエラーが発生しました: ${error.message}`, 'error');
             }

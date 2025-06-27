@@ -160,6 +160,132 @@ document.addEventListener("DOMContentLoaded", function () {
             officeSelect.classList.remove('bg-gray-200', 'cursor-not-allowed', 'pointer-events-none');
         }
     };
+    const loadAndCacheAllEmployees = async () => {
+        if (allEmployeesCache.length === 0) {
+            try {
+                // Lấy một lượng lớn (ví dụ 500) để đảm bảo có tất cả nhân viên, tránh phân trang
+                const employeesPage = await fetch(`${EMPLOYEE_API_URL}?size=500`, {
+                    headers: getRequestHeaders(),
+                    credentials: 'include'
+                }).then(handleResponse);
+                allEmployeesCache = employeesPage.content;
+            } catch (error) {
+                showAlert('従業員リストの読み込みに失敗しました。', 'error');
+            }
+        }
+    };
+
+    const getScheduleState = (schedule) => {
+        const now = new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Đặt giờ về đầu ngày để so sánh ngày
+
+        const scheduleStart = new Date(schedule.startDate);
+        const scheduleEnd = new Date(schedule.endDate);
+
+        // Tạo đối tượng datetime đầy đủ để so sánh
+        const scheduleStartDateTime = new Date(`${schedule.startDate}T${schedule.startTime || '00:00:00'}`);
+        const scheduleEndDateTime = new Date(`${schedule.endDate}T${schedule.endTime || '23:59:59'}`);
+
+        // 1. KIỂM TRA ĐÃ KẾT THÚC
+        if (scheduleEndDateTime < now) {
+            return 'FINISHED';
+        }
+
+        // 2. KIỂM TRA ĐANG DIỄN RA
+        if (scheduleStartDateTime <= now && now <= scheduleEndDateTime) {
+            return 'IN_PROGRESS';
+        }
+
+        // 3. MẶC ĐỊNH LÀ CHƯA DIỄN RA
+        return 'UPCOMING';
+    };
+
+    const setFormPermissions = (state) => {
+        // Mở khóa tất cả trước khi thiết lập quyền
+        const allElements = scheduleForm.querySelectorAll('input, select, textarea');
+        allElements.forEach(el => {
+            el.disabled = false;
+            el.readOnly = false;
+            el.classList.remove('bg-gray-200', 'cursor-not-allowed');
+        });
+
+        document.getElementById('save-schedule-btn').style.display = 'inline-block';
+        document.getElementById('delete-schedule-btn').style.display = 'inline-block';
+        document.getElementById('cancel-event-btn').style.display = 'none';
+
+
+        switch (state) {
+            case 'UPCOMING':
+                // Giữ nguyên, mọi thứ đều có thể chỉnh sửa
+                break;
+
+            case 'IN_PROGRESS':
+                // Khóa các trường không thể thay đổi khi sự kiện đang diễn ra
+                const fieldsToLock = ['schedule-employee', 'schedule-workType', 'schedule-office', 'schedule-startDate', 'schedule-startTime'];
+                fieldsToLock.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.disabled = true;
+                        el.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    }
+                });
+                // Vô hiệu hóa nút xóa, không thể xóa sự kiện đang diễn ra
+                document.getElementById('delete-schedule-btn').disabled = true;
+                document.getElementById('delete-schedule-btn').title = "進行中のスケジュールを削除できません。";
+                break;
+
+            case 'FINISHED':
+            case 'CANCELLED':
+                // Khóa toàn bộ form, chỉ cho xem
+                allElements.forEach(el => {
+                    el.disabled = true;
+                    el.readOnly = true;
+                    el.classList.add('bg-gray-200', 'cursor-not-allowed');
+                });
+                document.getElementById('save-schedule-btn').style.display = 'none';
+                document.getElementById('delete-schedule-btn').style.display = 'none';
+
+                // Chỉ hiển thị nút "Hủy" cho sự kiện đã kết thúc và chưa bị hủy
+                if (state === 'FINISHED') {
+                    document.getElementById('cancel-event-btn').style.display = 'inline-block';
+                }
+                break;
+        }
+    };
+    const updateEventFormUI = (selectedType) => {
+        const startTimeInput = document.getElementById('schedule-startTime');
+        const endTimeInput = document.getElementById('schedule-endTime');
+        const endDateInput = document.getElementById('schedule-endDate');
+        const startDateInput = document.getElementById('schedule-startDate');
+        const officeSelect = document.getElementById('schedule-office');
+        const timeInputsContainer = startTimeInput.closest('.grid');
+
+        if (selectedType === 'VACATION' || selectedType === 'BUSINESS_TRIP') {
+            timeInputsContainer.style.display = 'none';
+            startTimeInput.value = '';
+            endTimeInput.value = '';
+            endDateInput.readOnly = false;
+            endDateInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
+            officeSelect.disabled = false;
+            officeSelect.classList.remove('bg-gray-200', 'cursor-not-allowed', 'pointer-events-none');
+        } else {
+            timeInputsContainer.style.display = 'grid';
+            if (startDateInput.value) {
+                endDateInput.value = startDateInput.value;
+            }
+            endDateInput.readOnly = true;
+            endDateInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+
+            const selectedEmployeeId = document.getElementById('schedule-employee').value;
+            if (selectedEmployeeId) {
+                updateOfficeForInDayEvent(selectedEmployeeId);
+            } else {
+                 officeSelect.disabled = true;
+                 officeSelect.classList.add('bg-gray-200', 'cursor-not-allowed', 'pointer-events-none');
+            }
+        }
+    };
 
     // =================================================================
     // == イベントリスナーの設定ロジック ==
@@ -443,8 +569,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (scheduleWorkTypeSelect) {
             scheduleWorkTypeSelect.addEventListener('change', (e) => {
                 if (isPopulatingForm) return;
-
                 const selectedType = e.target.value;
+
+                updateEventFormUI(selectedType);
 
                 if (!selectedType) {
                     setScheduleFormState(false);
@@ -505,13 +632,34 @@ document.addEventListener("DOMContentLoaded", function () {
                 showAlert('終了時間は開始時間より後でなければなりません！', 'warning');
                 return;
             }
+           if (!isUpdating) {
+               const now = new Date();
+               const startDateValue = document.getElementById('schedule-startDate').value;
+               const startTimeValue = document.getElementById('schedule-startTime').value;
 
-            const now = new Date();
-            const scheduleStartDateTime = new Date(`${startDate}T${startTime || '00:00:00'}`);
-            if (scheduleStartDateTime < (now - 60000)) {
-                showAlert('過去の日付や時間にスケジュールを設定することはできません。', 'warning');
-                return;
-            }
+               // Chỉ kiểm tra thời gian trong quá khứ nếu đây là sự kiện có giờ cụ thể
+               if (startTimeValue) {
+                   const scheduleStartDateTime = new Date(`${startDateValue}T${startTimeValue}`);
+                   // So sánh với thời điểm hiện tại (trừ đi 1 phút để linh hoạt hơn)
+                   if (scheduleStartDateTime < (now - 60000)) {
+                       showAlert('過去の日付や時間にスケジュールを設定することはできません。', 'warning');
+                       return;
+                   }
+               } else {
+                   // Đối với sự kiện cả ngày (all-day), chúng ta chỉ so sánh ngày
+                   const scheduleStartDate = new Date(startDateValue);
+                   const today = new Date();
+
+                   // Chuẩn hóa cả hai ngày về 00:00:00 để so sánh thuần túy ngày tháng năm
+                   scheduleStartDate.setHours(0, 0, 0, 0);
+                   today.setHours(0, 0, 0, 0);
+
+                   if (scheduleStartDate < today) {
+                       showAlert('過去の日付にスケジュールを設定することはできません。', 'warning');
+                       return;
+                   }
+               }
+           }
 
             const formData = new FormData(scheduleForm);
             const scheduleData = Object.fromEntries(formData.entries());
@@ -602,42 +750,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const openScheduleModal = async (scheduleId = null, prefillStartDate = null, prefillEndDate = null, prefillResourceId = null, isPersonal = false) => {
         scheduleForm.reset();
-        document.getElementById('schedule-id').value = '';
-        scheduleModal.classList.remove('hidden');
+        isPopulatingForm = true;
 
-        const saveBtn = document.getElementById('save-schedule-btn');
-        const deleteBtn = document.getElementById('delete-schedule-btn');
-        const cancelEventBtn = document.getElementById('cancel-event-btn');
-        const formFields = scheduleForm.querySelectorAll('input, select, textarea');
-        const modalTitle = document.getElementById('schedule-modal-title');
         const employeeSelect = document.getElementById('schedule-employee');
-        const scheduleWorkTypeSelect = document.getElementById('schedule-workType');
+        const modalTitle = document.getElementById('schedule-modal-title');
 
-        saveBtn.style.display = 'inline-block';
-        deleteBtn.style.display = 'none';
-        cancelEventBtn.style.display = 'none';
-
-        if (allEmployeesCache.length === 0) {
-            const employeesPage = await fetch(`${EMPLOYEE_API_URL}?size=200`, {
-                headers: getRequestHeaders(),
-                credentials: 'include'
-            }).then(handleResponse);
-            allEmployeesCache = employeesPage.content;
-        }
+        // Luôn tải danh sách nhân viên
         employeeSelect.innerHTML = '<option value="">従業員を選択</option>' + allEmployeesCache.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
 
-        if (scheduleId) {
-            modalTitle.textContent = 'スケジュール詳細 ';
+        if (scheduleId) { // Chế độ xem/sửa (Giữ nguyên logic này)
+            modalTitle.textContent = 'スケジュールを編集';
             try {
-                isPopulatingForm = true;
                 const schedule = await fetch(`${SCHEDULE_API_URL}/${scheduleId}`, {
                     headers: getRequestHeaders(),
                     credentials: 'include'
                 }).then(handleResponse);
 
                 document.getElementById('schedule-id').value = schedule.id;
-                scheduleWorkTypeSelect.value = schedule.workType;
-                employeeSelect.value = schedule.employeeId;
+                document.getElementById('schedule-employee').value = schedule.employeeId;
+                document.getElementById('schedule-workType').value = schedule.workType;
                 document.getElementById('schedule-office').value = schedule.officeId;
                 document.getElementById('schedule-startDate').value = schedule.startDate;
                 document.getElementById('schedule-endDate').value = schedule.endDate;
@@ -645,68 +776,66 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById('schedule-endTime').value = schedule.endTime || '';
                 document.getElementById('schedule-notes').value = schedule.notes || '';
 
-                scheduleWorkTypeSelect.dispatchEvent(new Event('change'));
+                updateEventFormUI(schedule.workType);
+                const state = schedule.status === 'CANCELLED' ? 'CANCELLED' : getScheduleState(schedule);
 
-                const now = new Date();
-                const scheduleStartDateTime = new Date(`${schedule.startDate}T${schedule.startTime || '00:00:00'}`);
-                const isPastEvent = scheduleStartDateTime < now;
-
-                if (schedule.status === 'CANCELLED') {
-                    modalTitle.textContent = 'キャンセルされたスケジュール ';
-                    saveBtn.style.display = 'none';
-                    deleteBtn.style.display = 'none';
-                    cancelEventBtn.style.display = 'none';
-                    formFields.forEach(f => f.disabled = true);
-                } else if (isPastEvent) {
-                    modalTitle.textContent = '過去のスケジュール ';
-                    saveBtn.style.display = 'none';
-                    deleteBtn.style.display = 'none';
-                    cancelEventBtn.style.display = 'inline-block';
-                    formFields.forEach(f => f.disabled = true);
-                } else {
-                    modalTitle.textContent = 'スケジュールを編集 ';
-                    saveBtn.style.display = 'inline-block';
-                    deleteBtn.style.display = 'inline-block';
-                    cancelEventBtn.style.display = 'none';
-                    setScheduleFormState(true);
+                // Cập nhật tiêu đề và quyền hạn (giữ nguyên)
+                switch(state) {
+                    case 'UPCOMING': modalTitle.textContent = 'スケジュールを編集 '; break;
+                    case 'IN_PROGRESS': modalTitle.textContent = '進行中のスケジュール '; break;
+                    case 'FINISHED': modalTitle.textContent = '過去のスケジュール '; break;
+                    case 'CANCELLED': modalTitle.textContent = 'キャンセルされたスケジュール'; break;
                 }
+                setFormPermissions(state);
+
             } catch (error) {
                 showAlert(`スケジュールの詳細を読み込めませんでした: ${error.message}`, 'error');
                 scheduleModal.classList.add('hidden');
-            } finally {
-                isPopulatingForm = false;
             }
+
         } else {
-            // ------ CHẾ ĐỘ THÊM MỚI ------
+            // ================================================================
+            // == LOGIC THÊM MỚI ĐÃ ĐƯỢC CẤU TRÚC LẠI HOÀN TOÀN ==
+            // ================================================================
+             document.getElementById('schedule-id').value = '';
             modalTitle.textContent = '新規スケジュールを追加';
-            deleteBtn.style.display = 'none';
-            cancelEventBtn.style.display = 'none';
+            setFormPermissions('UPCOMING'); // Luôn cho phép chỉnh sửa khi thêm mới
 
-            setScheduleFormState(false);
-            scheduleWorkTypeSelect.value = '';
-            document.getElementById('schedule-startTime').closest('.grid').style.display = 'none';
-
-            if (prefillStartDate) document.getElementById('schedule-startDate').value = prefillStartDate;
-            if (prefillEndDate) {
-                document.getElementById('schedule-endDate').value = prefillEndDate;
-            } else if (prefillStartDate) {
-                document.getElementById('schedule-endDate').value = prefillStartDate;
+            // Bước 1: Xác định loại công việc ban đầu dựa trên việc chọn nhiều ngày hay không
+            let initialWorkType = '';
+            const isMultiDaySelection = prefillStartDate && prefillEndDate && prefillStartDate !== prefillEndDate;
+            if (isMultiDaySelection) {
+                initialWorkType = 'VACATION'; // Mặc định là 'Nghỉ phép' nếu chọn nhiều ngày
             }
+
+            // Bước 2: Điền các giá trị vào form một cách an toàn
+            if (prefillStartDate) {
+                document.getElementById('schedule-startDate').value = prefillStartDate;
+            }
+            // Chỉ điền ngày kết thúc nếu nó được cung cấp, nếu không thì dùng ngày bắt đầu
+            document.getElementById('schedule-endDate').value = prefillEndDate || prefillStartDate || '';
+
             if (prefillResourceId) {
                 employeeSelect.value = prefillResourceId;
             }
-            employeeSelect.disabled = isPersonal;
 
-            // <<< SỬA LỖI 2: TỰ ĐỘNG CHỌN LOẠI CÔNG VIỆC KHI CHỌN NHIỀU NGÀY >>>
-            // Kiểm tra xem đây có phải là một sự kiện kéo dài nhiều ngày hay không
-            if (prefillStartDate && prefillEndDate && prefillStartDate !== prefillEndDate) {
-                // Nếu là sự kiện nhiều ngày, tự động chọn "Nghỉ phép" (VACATION)
-                scheduleWorkTypeSelect.value = 'VACATION';
-                // Kích hoạt sự kiện 'change' để UI tự cập nhật (ẩn trường giờ, v.v.)
-                scheduleWorkTypeSelect.dispatchEvent(new Event('change'));
+            // Bước 3: Cập nhật dropdown "Loại công việc"
+            document.getElementById('schedule-workType').value = initialWorkType;
+
+            // Bước 4: Gọi hàm cập nhật UI với loại công việc đã xác định
+            // Điều này sẽ chạy vào đúng nhánh logic trong `updateEventFormUI`
+            updateEventFormUI(initialWorkType);
+
+            // Bước 5: Kích hoạt các trường trong form nếu đã có loại công việc được chọn sẵn
+            if (initialWorkType) {
+                setScheduleFormState(true);
+            } else {
+                setScheduleFormState(false); // Giữ form bị khóa nếu không có gì được chọn
             }
-            // <<< KẾT THÚC SỬA LỖI 2 >>>
         }
+
+        scheduleModal.classList.remove('hidden');
+        isPopulatingForm = false; // Kết thúc điền form
     };
 
 
@@ -763,6 +892,64 @@ document.addEventListener("DOMContentLoaded", function () {
                         days: 1
                     },
                 }
+            },
+
+            eventDidMount: function(info) {
+                // Lấy các thông tin cần thiết từ event
+                const props = info.event.extendedProps;
+                const workTypeName = workTypeTranslations[props.workType] || props.workType;
+                const notes = props.notes || '<em>なし</em>';
+                const officeName = props.officeName || '<em>未定</em>';
+
+                // --- BẮT ĐẦU LOGIC HIỂN THỊ THỜI GIAN/NGÀY THÔNG MINH ---
+
+                let timeOrDateHTML = '';
+
+                // 1. Kiểm tra xem có phải là sự kiện trong ngày hay không
+                if (props.startDate === props.endDate) {
+                    // Nếu là sự kiện TRONG NGÀY, hiển thị GIỜ
+                    if (props.startTime) {
+                        timeOrDateHTML = `
+                            <p class="text-xs text-gray-600 mt-1">
+                                <strong>時間:</strong> ${props.startTime.substring(0, 5)} - ${props.endTime.substring(0, 5)}
+                            </p>
+                        `;
+                    }
+                } else {
+                    // Nếu là sự kiện NHIỀU NGÀY, hiển thị NGÀY
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedStartDate = new Date(props.startDate).toLocaleDateString('ja-JP', options);
+                    const formattedEndDate = new Date(props.endDate).toLocaleDateString('ja-JP', options);
+
+                    timeOrDateHTML = `
+                        <p class="text-xs text-gray-600 mt-1">
+                            <strong>期間:</strong> ${formattedStartDate} - ${formattedEndDate}
+                        </p>
+                    `;
+                }
+
+                // --- KẾT THÚC LOGIC ---
+
+                // Sử dụng thư viện Tippy.js để tạo tooltip
+                tippy(info.el, {
+                    content: `
+                        <div class="p-1 text-left">
+                            <p class="font-bold text-blue-500 mb-1">
+                                ${workTypeName}
+                            </p>
+                            ${timeOrDateHTML} <p class="text-xs text-gray-600 mt-1">
+                                <strong>備考:</strong> ${notes}
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                <strong>オフィス:</strong> ${officeName}
+                            </p>
+                        </div>
+                    `,
+                    allowHTML: true,
+                    placement: 'top',
+                    animation: 'shift-away-subtle',
+                    theme: 'urban-blue',
+                });
             },
 
             resources: async (fetchInfo, successCallback, failureCallback) => {
@@ -855,7 +1042,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 openScheduleModal(
                     null,
                     info.startStr.split('T')[0],
-                    actualEndDate.toISOString().split('T')[0],
+                    toLocalISOString(actualEndDate),
                     info.resource.id
                 );
                 teamCalendar.unselect();
@@ -992,6 +1179,65 @@ document.addEventListener("DOMContentLoaded", function () {
             selectMirror: true,
             aspectRatio: 2,
             displayEventTime: false,
+
+            eventDidMount: function(info) {
+                // Lấy các thông tin cần thiết từ event
+                const props = info.event.extendedProps;
+                const workTypeName = workTypeTranslations[props.workType] || props.workType;
+                const notes = props.notes || '<em>なし</em>';
+                const officeName = props.officeName || '<em>未定</em>';
+
+                // --- BẮT ĐẦU LOGIC HIỂN THỊ THỜI GIAN/NGÀY THÔNG MINH ---
+
+                let timeOrDateHTML = '';
+
+                // 1. Kiểm tra xem có phải là sự kiện trong ngày hay không
+                if (props.startDate === props.endDate) {
+                    // Nếu là sự kiện TRONG NGÀY, hiển thị GIỜ
+                    if (props.startTime) {
+                        timeOrDateHTML = `
+                            <p class="text-xs text-gray-600 mt-1">
+                                <strong>時間:</strong> ${props.startTime.substring(0, 5)} - ${props.endTime.substring(0, 5)}
+                            </p>
+                        `;
+                    }
+                } else {
+                    // Nếu là sự kiện NHIỀU NGÀY, hiển thị NGÀY
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedStartDate = new Date(props.startDate).toLocaleDateString('ja-JP', options);
+                    const formattedEndDate = new Date(props.endDate).toLocaleDateString('ja-JP', options);
+
+                    timeOrDateHTML = `
+                        <p class="text-xs text-gray-600 mt-1">
+                            <strong>期間:</strong> ${formattedStartDate} - ${formattedEndDate}
+                        </p>
+                    `;
+                }
+
+                // --- KẾT THÚC LOGIC ---
+
+                // Sử dụng thư viện Tippy.js để tạo tooltip
+                tippy(info.el, {
+                    content: `
+                        <div class="p-1 text-left">
+                            <p class="font-bold text-blue-500 mb-1">
+                                ${workTypeName}
+                            </p>
+                            ${timeOrDateHTML} <p class="text-xs text-gray-600 mt-1">
+                                <strong>備考:</strong> ${notes}
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                <strong>オフィス:</strong> ${officeName}
+                            </p>
+                        </div>
+                    `,
+                    allowHTML: true,
+                    placement: 'top',
+                    animation: 'shift-away-subtle',
+                    theme: 'urban-blue',
+                });
+            },
+
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
                     const params = new URLSearchParams({
@@ -1093,6 +1339,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     }).then(handleResponse);
                     showAlert('スケジュールを正常に更新しました！', 'success');
                     personalCalendar.refetchEvents(); // Chỉ cần tải lại lịch cá nhân
+                    if (teamCalendar) teamCalendar.refetchEvents(); // <<< THÊM DÒNG NÀY: Đồng bộ lại team calendar
+
                 } catch (error) {
                     showAlert(`更新中のエラー: ${error.message}`, 'error');
                     revert();
@@ -1123,6 +1371,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     }).then(handleResponse);
                     showAlert('期間を正常に更新しました！', 'success');
                     personalCalendar.refetchEvents();
+                    if (teamCalendar) teamCalendar.refetchEvents(); // Đồng bộ lại team calendar
+
                 } catch (error) {
                     showAlert(`更新中のエラー: ${error.message}`, 'error');
                     revert();
@@ -1317,24 +1567,25 @@ document.addEventListener("DOMContentLoaded", function () {
             employees.map(employee => {
                 const avatarSrc = employee.avatar ? `/api/files/avatar/${employee.avatar}` : 'https://placehold.co/100x100/E2E8F0/A0AEC0?text=N/A';
                 const positionName = positionTranslations[employee.position] || employee.position || 'N/A';
-                let isDeleteDisabled = false;
-                let deleteTooltip = 'Xóa nhân viên';
 
-                if (employee.id === currentUserId) {
-                    isDeleteDisabled = true;
-                    deleteTooltip = '自分のアカウントを削除することはできません ';
-                } else if (currentUserRole === 'MANAGER' && (employee.role === 'ADMIN' || employee.role === 'MANAGER')) {
-                    isDeleteDisabled = true;
-                    deleteTooltip = '管理者には上位レベルのアカウントを削除する権限はありません。';
+                const isSelf = (employee.id === currentUserId);
+                const isSuperior = (currentUserRole === 'MANAGER' && (employee.role === 'ADMIN' || employee.role === 'MANAGER'));
+                const isDeleteDisabled = isSelf || isSuperior;
+
+                let deleteTooltip = '従業員を削除';
+                if (isSelf) {
+                    deleteTooltip = '自分のアカウントを削除することはできません。';
+                } else if (isSuperior) {
+                    deleteTooltip = '上位の役職のアカウントを削除する権限はありません。';
                 }
 
                 const deleteButtonHTML = `<button
-                                                class="text-red-600 hover:text-red-900 delete-employee-btn ${isDeleteDisabled ? 'text-gray-400 cursor-not-allowed' : ''}"
-                                                data-id="${employee.id}"
-                                                ${isDeleteDisabled ? 'disabled' : ''}
-                                                title="${deleteTooltip}">
-                                                <i class="fas fa-trash-alt"></i>
-                                              </button>`;
+                    class="text-red-600 hover:text-red-900 delete-employee-btn ${isDeleteDisabled ? 'text-gray-400 cursor-not-allowed' : ''}"
+                    data-id="${employee.id}"
+                    ${isDeleteDisabled ? 'disabled' : ''}
+                    title="${deleteTooltip}">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>`;
                 return `
                     <tr id="employee-row-${employee.id}">
                         <td class="px-6 py-4">
@@ -1475,6 +1726,7 @@ document.addEventListener("DOMContentLoaded", function () {
         setupOfficeListeners();
         setupEmployeeListeners();
 
+        await loadAndCacheAllEmployees();
         await fetchAndRenderOffices();
         await loadOfficesForSelects();
         await fetchAndRenderEmployees();

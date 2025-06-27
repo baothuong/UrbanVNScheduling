@@ -53,15 +53,15 @@
 }
  .fc-timeline-event {
     /* FullCalendarライブラリのデフォルトスタイルを上書きするために!importantを使用 */
-    display: flex !important;
-    align-items: center !important;    /* 垂直方向中央揃え */
-    justify-content: center !important; /* 水平方向中央揃え */
+    display: flex ;
+    align-items: center ;    /* 垂直方向中央揃え */
+    justify-content: center ; /* 水平方向中央揃え */
 }
 
 .fc-timeline-event .fc-event-main {
     /* 内部コンテナが全スペースを占めるようにする */
-    width: 100% !important;
-    height: 100% !important;
+    width: 100% ;
+    height: 100% ;
 }
 
 .fc-timeline-event .fc-event-title-container {
@@ -97,3 +97,25 @@
 .event-cancelled .fc-event-title {
     color: #4A5568 !important; /* Chữ tối hơn để dễ đọc */
 }
+
+.tippy-box[data-theme~='urban-blue'] {
+      background-color: #ffffff; /* Nền trắng */
+      color: #1f2937; /* Chữ màu xám đậm */
+      border: 1px solid #e5e7eb; /* Viền màu xám nhạt */
+      border-radius: 6px; /* Bo góc */
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Đổ bóng nhẹ */
+    }
+
+    /* Định dạng cho mũi tên của tooltip */
+    .tippy-box[data-theme~='urban-blue'][data-placement^='top'] > .tippy-arrow::before {
+      border-top-color: #ffffff;
+    }
+    .tippy-box[data-theme~='urban-blue'][data-placement^='bottom'] > .tippy-arrow::before {
+      border-bottom-color: #ffffff;
+    }
+    /* ... có thể thêm cho các vị trí khác nếu cần ... */
+
+    /* Làm cho chữ bên trong tooltip của chúng ta đẹp hơn */
+    .tippy-box[data-theme~='urban-blue'] .font-bold {
+        color: #3b82f6; /* Màu xanh dương cho tiêu đề */
+    }
