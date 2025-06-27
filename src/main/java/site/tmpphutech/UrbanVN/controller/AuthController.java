@@ -141,10 +141,10 @@ public class AuthController {
 
         try{
             emailService.sendForgotPasswordEmail(email, resetPasswordLink);
-            return ResponseEntity.ok("Gửi email đến người dùng thành công");
+            return ResponseEntity.ok("ユーザーにメールを送信しました");
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Gửi email đến người dùng thất bại");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ユーザーにメールを送信できませんでした");
         }
     }
 
@@ -161,7 +161,7 @@ public class AuthController {
         // Clear SecurityContext
         SecurityContextHolder.clearContext();
 
-        return ResponseEntity.ok("Đăng xuất thành công");
+        return ResponseEntity.ok("ログアウトに成功しました");
     }
 
     @GetMapping("/me")
@@ -175,7 +175,7 @@ public class AuthController {
         HttpSession session = request.getSession(false);
         if (session == null) {
             System.out.println("❌ No session found");
-            return ResponseEntity.status(401).body("Phiên làm việc đã hết hạn");
+            return ResponseEntity.status(401).body("セッションが期限切れになりました。");
         }
 
         System.out.println("✅ Session found:");
@@ -190,7 +190,7 @@ public class AuthController {
 
         if (context == null || context.getAuthentication() == null) {
             System.out.println("❌ No SecurityContext or Authentication in session");
-            return ResponseEntity.status(401).body("Chưa đăng nhập");
+            return ResponseEntity.status(401).body("ログインしていません。");
         }
 
         System.out.println("✅ SecurityContext found");
@@ -209,7 +209,7 @@ public class AuthController {
             e.printStackTrace();
         }
 
-        return ResponseEntity.status(401).body("Chưa đăng nhập");
+        return ResponseEntity.status(401).body("ログインしていません。");
     }
     @GetMapping("/check-session")
     public ResponseEntity<?> checkSession(HttpSession session) {
@@ -237,17 +237,17 @@ public class AuthController {
                     // ✅ THÊM: Xóa token sau khi sử dụng để tránh tái sử dụng
                     //passwordResetTokenService.deleteToken(resetPasswordRequestDTO.getToken());
 
-                    return ResponseEntity.ok("Đã thay đổi mật khẩu thành công");
+                    return ResponseEntity.ok("パスワードが正常に変更されました。");
                 }catch (Exception e){
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi thay đổi mật khẩu: " + e.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("パスワードの変更中にエラーが発生しました。: " + e.getMessage());
                 }
             }else {
                 // ✅ SỬA: Xóa token hết hạn
                 //passwordResetTokenService.deleteToken(resetPasswordRequestDTO.getToken());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Link đã hết hạn");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("リンクの有効期限が切れました");
             }
         }else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Liên kết không tồn tại hoặc không hợp lệ");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("リンクが存在しないか、無効です");
         }
     }
 
