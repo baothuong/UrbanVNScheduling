@@ -1,8 +1,8 @@
 -- --------------------------------------------------------
--- Máy chủ:                      127.0.0.1
--- Phiên bản máy chủ:            10.4.32-MariaDB - mariadb.org binary distribution
--- HĐH máy chủ:                  Win64
--- HeidiSQL Phiên bản:           12.11.0.7065
+-- Host:                         127.0.0.1
+-- Server version:               10.4.32-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.1.0.6537
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -15,11 +15,13 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- Đang kết xuất đổ cấu trúc cơ sở dữ liệu cho urbanvn
+-- Dumping database structure for urbanvn
+DROP DATABASE IF EXISTS `urbanvn`;
 CREATE DATABASE IF NOT EXISTS `urbanvn` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 USE `urbanvn`;
 
--- Đang kết xuất đổ cấu trúc cho bảng urbanvn.employees
+-- Dumping structure for table urbanvn.employees
+DROP TABLE IF EXISTS `employees`;
 CREATE TABLE IF NOT EXISTS `employees` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `address` varchar(255) DEFAULT NULL,
@@ -42,27 +44,22 @@ CREATE TABLE IF NOT EXISTS `employees` (
   CONSTRAINT `FKcelobek54amw1bedldhp6f98r` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Đang kết xuất đổ dữ liệu cho bảng urbanvn.employees: ~1 rows (xấp xỉ)
-DELETE FROM `employees`;
-INSERT INTO `employees` (`id`, `address`, `avatar`, `created_at`, `email`, `gender`, `name`, `password`, `phone_number`, `position`, `role`, `updated_at`, `username`, `office_id`) VALUES
-	(1, '123 Đường ABC, Hà Nội', NULL, '2025-06-24 10:10:12.000000', 'admin@urban.vn', 'MALE', 'Nguyễn Văn Admin', '$2a$10$s4gteSTE4Kt2NsytZdoTy..2ZYVQbnLMkcRuMFS8HRVF7c6OncQhS', '0901234567', 'MANAGER', 'ADMIN', '2025-06-24 10:10:12.000000', 'admin', 1);
+-- Data exporting was unselected.
 
--- Đang kết xuất đổ cấu trúc cho bảng urbanvn.offices
+-- Dumping structure for table urbanvn.offices
+DROP TABLE IF EXISTS `offices`;
 CREATE TABLE IF NOT EXISTS `offices` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `address` varchar(255) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
-  `is_active` bit(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKedjms83xmpm0fdqiqya1a6qwt` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Đang kết xuất đổ dữ liệu cho bảng urbanvn.offices: ~1 rows (xấp xỉ)
-DELETE FROM `offices`;
-INSERT INTO `offices` (`id`, `address`, `name`, `is_active`) VALUES
-	(1, 'Tầng 10, Tòa nhà Keangnam, Phạm Hùng, Nam Từ Liêm, Hà Nội', 'Văn phòng Hà Nội', b'1');
+-- Data exporting was unselected.
 
--- Đang kết xuất đổ cấu trúc cho bảng urbanvn.password_reset_token
+-- Dumping structure for table urbanvn.password_reset_token
+DROP TABLE IF EXISTS `password_reset_token`;
 CREATE TABLE IF NOT EXISTS `password_reset_token` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `email` varchar(255) NOT NULL,
@@ -71,12 +68,12 @@ CREATE TABLE IF NOT EXISTS `password_reset_token` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKcokxly6aosm7di3ldt7whhoqw` (`email`),
   UNIQUE KEY `UKg0guo4k8krgpwuagos61oc06j` (`token`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Đang kết xuất đổ dữ liệu cho bảng urbanvn.password_reset_token: ~0 rows (xấp xỉ)
-DELETE FROM `password_reset_token`;
+-- Data exporting was unselected.
 
--- Đang kết xuất đổ cấu trúc cho bảng urbanvn.schedules
+-- Dumping structure for table urbanvn.schedules
+DROP TABLE IF EXISTS `schedules`;
 CREATE TABLE IF NOT EXISTS `schedules` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) DEFAULT NULL,
@@ -89,16 +86,14 @@ CREATE TABLE IF NOT EXISTS `schedules` (
   `work_type` enum('BUSINESS_TRIP','NORMAL','OUTSIDE','OVERTIME','VACATION') DEFAULT NULL,
   `employee_id` bigint(20) NOT NULL,
   `office_id` bigint(20) DEFAULT NULL,
-  `status` enum('ACTIVE','CANCELLED') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FKk1xoduufw1mu7ywao2xg90g3f` (`employee_id`),
   KEY `FK_schedules_offices` (`office_id`),
   CONSTRAINT `FK_schedules_offices` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`),
   CONSTRAINT `FKk1xoduufw1mu7ywao2xg90g3f` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Đang kết xuất đổ dữ liệu cho bảng urbanvn.schedules: ~0 rows (xấp xỉ)
-DELETE FROM `schedules`;
+-- Data exporting was unselected.
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
