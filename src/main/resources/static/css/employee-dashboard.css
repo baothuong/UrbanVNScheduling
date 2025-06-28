@@ -107,3 +107,22 @@
     .tippy-box[data-theme~='urban-blue'] .font-bold {
         color: #3b82f6; /* Màu xanh dương cho tiêu đề */
     }
+
+    /* Thêm vào cuối tệp employee-dashboard.css */
+    .schedule-list-scrollable {
+      max-height: 275px; /* Chiều cao tối đa của danh sách, bạn có thể điều chỉnh */
+      overflow-y: auto;  /* Hiển thị thanh cuộn dọc khi nội dung vượt quá chiều cao */
+    }
+
+    /* Thêm một chút khoảng cách và đường kẻ dưới cho các mục trong danh sách cuộn */
+    .schedule-list-scrollable > div {
+        /* Chỉ sử dụng padding và border để phân cách, loại bỏ margin */
+        padding-bottom: 0.5rem; /* Giảm padding một chút cho gọn hơn (8px) */
+        border-bottom: 1px solid #e5e7eb; /* Giữ lại đường kẻ mờ */
+    }
+
+    /* Mục cuối cùng không cần đường kẻ và padding ở dưới */
+    .schedule-list-scrollable > div:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }

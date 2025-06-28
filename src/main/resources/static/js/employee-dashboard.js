@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const eventTypeSelect = document.getElementById('event-type');
     const employeeStartDateInput = document.getElementById('event-start-date');
 
+    const futureEventsCountNumberEl = document.getElementById('future-events-count-number');
+
     // =================================================================
     // == 3. HELPER FUNCTIONS
     // =================================================================
@@ -282,24 +284,85 @@ document.addEventListener('DOMContentLoaded', () => {
         profileModal.addEventListener('click', (e) => { if (e.target === profileModal) closeModal(); });
     };
 
+//    const loadUpcomingSchedules = async () => {
+//        const today = getTodayString();
+//        const nextWeek = new Date();
+//        nextWeek.setDate(nextWeek.getDate() + 7);
+//        const nextWeekString = nextWeek.toISOString().split('T')[0];
+//        try {
+//            const response = await fetchWithAuth(`/api/schedules/employee/${config.currentUser.id}?startDate=${today}&endDate=${nextWeekString}`);
+//            if (!response.ok) throw new Error('Failed to fetch upcoming schedules');
+//
+//            const schedules = (await response.json()).filter(s => s.status === 'ACTIVE');
+//
+//            // === PHẦN NÂNG CẤP ===
+//            // Cập nhật số lượng sự kiện vào widget trên dashboard
+//            if (futureEventsCountNumberEl) {
+//                futureEventsCountNumberEl.textContent = schedules.length;
+//            }
+//            // === KẾT THÚC NÂNG CẤP ===
+//
+//            const schedulesForList = schedules.slice(0, 3); // Vẫn chỉ hiển thị 3 lịch trình gần nhất trong danh sách
+//
+//            upcomingSchedulesList.innerHTML = '';
+//            if (schedulesForList.length === 0) {
+//                upcomingSchedulesList.innerHTML = '<p class="text-sm text-gray-500">今後のスケジュールはありません。</p>';
+//                return;
+//            }
+//            const workTypeNames = { 'NORMAL': '通常勤務', 'BUSINESS_TRIP': '出張', 'VACATION': '休暇', 'OUTSIDE': '外出', 'OVERTIME': '残業' };
+//            schedulesForList.forEach(s => {
+//                const div = document.createElement('div');
+//                div.className = 'p-3 bg-gray-50 rounded-md';
+//                div.innerHTML = `
+//                    <p class="font-medium text-gray-700">${new Date(s.startDate).toLocaleDateString('ja-JP', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
+//                    <p class="text-sm text-gray-500">${workTypeNames[s.workType] || s.workType} | ${s.officeName}</p>
+//                `;
+//                upcomingSchedulesList.appendChild(div);
+//            });
+//        } catch (e) {
+//            upcomingSchedulesList.innerHTML = '<p class="text-sm text-red-500">スケジュールの読み込み中にエラーが発生しました。</p>';
+//            // Nếu có lỗi, cũng cập nhật widget
+//            if (futureEventsCountNumberEl) {
+//                futureEventsCountNumberEl.textContent = 'X';
+//            }
+//        }
+//    };
     const loadUpcomingSchedules = async () => {
         const today = getTodayString();
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        const nextWeekString = nextWeek.toISOString().split('T')[0];
+        // Nâng cấp: Lấy lịch trình trong 30 ngày tới để thấy rõ việc cuộn trang
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+        const futureDateString = futureDate.toISOString().split('T')[0];
+
         try {
-            const response = await fetchWithAuth(`/api/schedules/employee/${config.currentUser.id}?startDate=${today}&endDate=${nextWeekString}`);
+            const response = await fetchWithAuth(`/api/schedules/employee/${config.currentUser.id}?startDate=${today}&endDate=${futureDateString}`);
             if (!response.ok) throw new Error('Failed to fetch upcoming schedules');
-            const schedules = (await response.json()).filter(s => s.status === 'ACTIVE').slice(0, 3);
+
+            const schedules = (await response.json()).filter(s => s.status === 'ACTIVE');
+
+            // Cập nhật số lượng sự kiện vào widget "今週の予定" (Lịch trình tuần này)
+            if (futureEventsCountNumberEl) {
+                // Để nhất quán với tiêu đề widget, chúng ta chỉ đếm các sự kiện trong 7 ngày tới
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                const countInWeek = schedules.filter(s => new Date(s.startDate) <= nextWeek).length;
+                futureEventsCountNumberEl.textContent = countInWeek;
+            }
+
             upcomingSchedulesList.innerHTML = '';
+
+            // Nếu không có sự kiện nào trong 30 ngày tới, hiển thị thông báo
             if (schedules.length === 0) {
-                upcomingSchedulesList.innerHTML = '<p class="text-sm text-gray-500">今後のスケジュールはありません。</p>';
+                upcomingSchedulesList.innerHTML = '<p class="text-sm text-gray-500">今後30日間のスケジュールはありません。</p>';
                 return;
             }
+
             const workTypeNames = { 'NORMAL': '通常勤務', 'BUSINESS_TRIP': '出張', 'VACATION': '休暇', 'OUTSIDE': '外出', 'OVERTIME': '残業' };
+
+            // Nâng cấp: Lặp qua TẤT CẢ sự kiện đã fetch (trong 30 ngày), không còn giới hạn 3 mục
             schedules.forEach(s => {
                 const div = document.createElement('div');
-                div.className = 'p-3 bg-gray-50 rounded-md';
+                // Class được quản lý bởi CSS ở Bước 1
                 div.innerHTML = `
                     <p class="font-medium text-gray-700">${new Date(s.startDate).toLocaleDateString('ja-JP', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
                     <p class="text-sm text-gray-500">${workTypeNames[s.workType] || s.workType} | ${s.officeName}</p>
@@ -308,6 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } catch (e) {
             upcomingSchedulesList.innerHTML = '<p class="text-sm text-red-500">スケジュールの読み込み中にエラーが発生しました。</p>';
+            if (futureEventsCountNumberEl) {
+                futureEventsCountNumberEl.textContent = 'X';
+            }
         }
     };
 

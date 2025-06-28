@@ -86,16 +86,30 @@
             </div>
           </div>
 
+<!--          <div class="mt-4 grid grid-cols-2 gap-4 text-sm">-->
+<!--            <div class="bg-white bg-opacity-10 rounded-lg p-3">-->
+<!--              <i class="fas fa-sun text-yellow-300 mb-1"></i>-->
+<!--              <p class="font-medium">あなたに</p>-->
+<!--              <p class="text-gray-200">良い一日を</p>-->
+<!--            </div>-->
+<!--            <div class="bg-white bg-opacity-10 rounded-lg p-3">-->
+<!--              <i class="fas fa-briefcase text-green-300 mb-1"></i>-->
+<!--              <p class="font-medium">働く</p>-->
+<!--              <p class="text-gray-200">高効率</p>-->
+<!--            </div>-->
+<!--          </div>-->
           <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-            <div class="bg-white bg-opacity-10 rounded-lg p-3">
-              <i class="fas fa-sun text-yellow-300 mb-1"></i>
-              <p class="font-medium">あなたに</p>
-              <p class="text-gray-200">良い一日を</p>
+            <div class="bg-white bg-opacity-10 rounded-lg p-3 flex flex-col justify-center items-center text-center">
+              <i class="fas fa-quote-left text-teal-300 mb-2"></i>
+              <p class="font-medium">
+                効率的に働き、<br>素晴らしい一日を！
+              </p>
             </div>
-            <div class="bg-white bg-opacity-10 rounded-lg p-3">
-              <i class="fas fa-briefcase text-green-300 mb-1"></i>
-              <p class="font-medium">働く</p>
-              <p class="text-gray-200">高効率</p>
+
+            <div class="bg-white bg-opacity-10 rounded-lg p-3 flex flex-col justify-center items-center text-center">
+              <i class="fas fa-calendar-check text-orange-300 mb-1"></i>
+              <p class="font-medium">今週の予定</p>
+              <p class="text-2xl font-bold text-white" id="future-events-count-number">0</p>
             </div>
           </div>
         </div>
@@ -105,11 +119,8 @@
         <h2 class="text-xl font-semibold text-gray-700 mb-3">
           <i class="fas fa-calendar-check text-blue-500 mr-2"></i>今後のスケジュール
         </h2>
-        <div id="upcoming-schedules-list" class="space-y-3">
+        <div id="upcoming-schedules-list" class="schedule-list-scrollable">
         </div>
-        <a href="#lich-lam-viec" class="mt-4 inline-block text-blue-500 hover:text-blue-700 font-medium">
-          詳細なカレンダーを見る <i class="fas fa-arrow-right ml-1 text-xs"></i>
-        </a>
       </div>
     </div>
   </section>
