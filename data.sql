@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `employees` (
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.employees: ~1 rows (xấp xỉ)
 DELETE FROM `employees`;
 INSERT INTO `employees` (`id`, `address`, `avatar`, `created_at`, `email`, `gender`, `name`, `password`, `phone_number`, `position`, `role`, `updated_at`, `username`, `office_id`) VALUES
-	(1, '123 Đường ABC, Hà Nội', NULL, '2025-06-28 17:12:29.000000', 'admin@urban.vn', 'MALE', 'Nguyễn Văn Admin', '$2a$10$zZ/evsuXdyDnc96wwo6YXu3BbyknzUTJUEPL17sVreZCES5WucGhe', '0901234567', 'MANAGER', 'ADMIN', '2025-06-28 17:12:29.000000', 'admin', 1);
+	(1, '123 Đường ABC, Hà Nội', NULL, '2025-06-28 17:12:29.000000', 'lyhoangphuc2407@gmail.com', 'MALE', 'Nguyễn Văn Admin', '$2a$10$zZ/evsuXdyDnc96wwo6YXu3BbyknzUTJUEPL17sVreZCES5WucGhe', '0901234567', 'MANAGER', 'ADMIN', '2025-06-28 17:12:29.000000', 'admin', 1);
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.offices
 DROP TABLE IF EXISTS `offices`;
@@ -65,8 +65,8 @@ DELETE FROM `offices`;
 INSERT INTO `offices` (`id`, `address`, `name`, `is_active`) VALUES
 	(1, 'Tầng 10, Tòa nhà Keangnam, Phạm Hùng, Nam Từ Liêm, Hà Nội', 'Yokohama', 1),
 	(2, 'Tầng 15, Tòa nhà Bitexco, Quận 1, TP.HCM', 'Sapporo', 1),
-	(3, 'Tầng 5, Tòa nhà FPT, Quận Ngũ Hành Sơn, Đà Nẵng', 'Miysgi', 1),
-	(4, 'Shibuya Sky Building, Tokyo, Japan', 'Văn phòng Tokyo', 1);
+	(3, 'Tầng 5, Tòa nhà FPT, Quận Ngũ Hành Sơn, Đà Nẵng', 'Miyagi', 1),
+	(4, 'Shibuya Sky Building, Tokyo, Japan', 'Tokyo', 1);
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.schedules
 DROP TABLE IF EXISTS `schedules`;
