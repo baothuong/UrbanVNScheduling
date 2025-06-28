@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `employees` (
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.employees: ~1 rows (xấp xỉ)
 DELETE FROM `employees`;
 INSERT INTO `employees` (`id`, `address`, `avatar`, `created_at`, `email`, `gender`, `name`, `password`, `phone_number`, `position`, `role`, `updated_at`, `username`, `office_id`) VALUES
-	(13, 'abc', NULL, '2025-06-28 16:50:54.000000', 'admin123@gmail.com', 'MALE', 'Admin', '123456', '0987654321', 'LEADER', 'ADMIN', '2025-06-28 16:50:28.000000', 'admin', 6);
+	(13, 'abc', NULL, '2025-06-28 16:50:54.000000', 'admin123@gmail.com', 'MALE', 'Admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0987654321', 'LEADER', 'ADMIN', '2025-06-28 16:50:28.000000', 'admin', 6);
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.offices
 DROP TABLE IF EXISTS `offices`;
