@@ -75,6 +75,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const scheduleForm = document.getElementById('schedule-form');
     const deleteScheduleBtn = document.getElementById('delete-schedule-btn');
     const addScheduleBtn = document.getElementById('add-schedule-main-btn');
+    const teamCalendarPositionFilter = document.getElementById('team-calendar-position-filter');
+    const teamCalendarSearchInput = document.getElementById('team-calendar-search-input');
     // =================================================================
     // == ヘルパー関数 ==
     // =================================================================
@@ -700,11 +702,31 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        teamCalendarOfficeFilter.addEventListener('change', () => {
-            if (teamCalendar) {
-                teamCalendar.refetchEvents();
-                teamCalendar.refetchResources();
-            }
+        const teamCalendarPositionFilter = document.getElementById('team-calendar-position-filter');
+        const teamCalendarSearchInput = document.getElementById('team-calendar-search-input');
+
+        // Gộp các bộ lọc vào một mảng để thêm listener
+        const teamCalendarFilters = [
+            teamCalendarOfficeFilter,
+            teamCalendarPositionFilter,
+            teamCalendarSearchInput
+        ];
+
+        // Thêm listener cho tất cả bộ lọc
+        teamCalendarFilters.forEach(filterElement => {
+            // Sử dụng 'input' cho ô tìm kiếm để bắt sự kiện ngay khi gõ
+            // Sử dụng 'change' cho select dropdown
+            const eventType = filterElement.tagName.toLowerCase() === 'input' ? 'input' : 'change';
+
+            filterElement.addEventListener(eventType, () => {
+                if (teamCalendar) {
+                    // Quan trọng: Phải gọi refetchResources() để tải lại danh sách nhân viên theo bộ lọc mới
+                    teamCalendar.refetchResources();
+
+                    // refetchEvents() cũng cần thiết để đảm bảo các sự kiện hiển thị đúng với danh sách nhân viên mới
+                    teamCalendar.refetchEvents();
+                }
+            });
         });
 
         deleteScheduleBtn.addEventListener('click', async () => {
@@ -952,25 +974,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             },
 
+
             resources: async (fetchInfo, successCallback, failureCallback) => {
                 try {
+                    // Lấy giá trị từ TẤT CẢ các bộ lọc
                     const officeId = teamCalendarOfficeFilter.value;
+                    const position = teamCalendarPositionFilter.value; // THÊM MỚI
+                    const keyword = teamCalendarSearchInput.value.trim(); // THÊM MỚI
+
+                    // Tạo params, tăng size để lấy được nhiều kết quả hơn khi tìm kiếm
                     const params = new URLSearchParams({
                         size: 200
                     });
-                    if (officeId) params.append('officeId', officeId);
 
+                    // Thêm các tham số vào URL nếu chúng có giá trị
+                    if (officeId) params.append('officeId', officeId);
+                    if (position) params.append('position', position); // THÊM MỚI
+                    if (keyword) params.append('keyword', keyword);   // THÊM MỚI
+
+                    // Gọi API với các tham số đã được cập nhật
                     const employeesPage = await fetch(`${EMPLOYEE_API_URL}?${params.toString()}`, {
                         headers: getRequestHeaders(),
                         credentials: 'include'
                     }).then(handleResponse);
-                    allEmployeesCache = employeesPage.content;
-                    const resources = allEmployeesCache.map(emp => ({
+
+                    // Đoạn còn lại giữ nguyên
+                    const filteredEmployees = employeesPage.content;
+                    const resources = filteredEmployees.map(emp => ({
                         id: emp.id,
                         title: emp.name
                     }));
                     successCallback(resources);
                 } catch (error) {
+                    showAlert('従業員リストの読み込みに失敗しました。', 'error'); // Thông báo lỗi
                     failureCallback(error);
                 }
             },
