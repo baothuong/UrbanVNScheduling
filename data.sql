@@ -42,12 +42,12 @@ CREATE TABLE IF NOT EXISTS `employees` (
   UNIQUE KEY `UK3gqbimdf7fckjbwt1kcud141m` (`username`),
   KEY `FKcelobek54amw1bedldhp6f98r` (`office_id`),
   CONSTRAINT `FKcelobek54amw1bedldhp6f98r` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.employees: ~1 rows (xấp xỉ)
 DELETE FROM `employees`;
 INSERT INTO `employees` (`id`, `address`, `avatar`, `created_at`, `email`, `gender`, `name`, `password`, `phone_number`, `position`, `role`, `updated_at`, `username`, `office_id`) VALUES
-	(13, 'abc', NULL, '2025-06-28 16:50:54.000000', 'admin123@gmail.com', 'MALE', 'Admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0987654321', 'LEADER', 'ADMIN', '2025-06-28 16:50:28.000000', 'admin', 6);
+	(1, '123 Đường ABC, Hà Nội', NULL, '2025-06-28 17:12:29.000000', 'admin@urban.vn', 'MALE', 'Nguyễn Văn Admin', '$2a$10$zZ/evsuXdyDnc96wwo6YXu3BbyknzUTJUEPL17sVreZCES5WucGhe', '0901234567', 'MANAGER', 'ADMIN', '2025-06-28 17:12:29.000000', 'admin', 1);
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.offices
 DROP TABLE IF EXISTS `offices`;
@@ -58,15 +58,15 @@ CREATE TABLE IF NOT EXISTS `offices` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKedjms83xmpm0fdqiqya1a6qwt` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.offices: ~4 rows (xấp xỉ)
 DELETE FROM `offices`;
 INSERT INTO `offices` (`id`, `address`, `name`, `is_active`) VALUES
-	(6, NULL, 'Yokohama', 1),
-	(7, NULL, 'Tokyo', 1),
-	(8, NULL, 'Sapporo', 1),
-	(9, NULL, 'Miysgi', 1);
+	(1, 'Tầng 10, Tòa nhà Keangnam, Phạm Hùng, Nam Từ Liêm, Hà Nội', 'Yokohama', 1),
+	(2, 'Tầng 15, Tòa nhà Bitexco, Quận 1, TP.HCM', 'Sapporo', 1),
+	(3, 'Tầng 5, Tòa nhà FPT, Quận Ngũ Hành Sơn, Đà Nẵng', 'Miysgi', 1),
+	(4, 'Shibuya Sky Building, Tokyo, Japan', 'Văn phòng Tokyo', 1);
 
 -- Đang kết xuất đổ cấu trúc cho bảng urbanvn.schedules
 DROP TABLE IF EXISTS `schedules`;
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `schedules` (
   KEY `FK_schedules_offices` (`office_id`),
   CONSTRAINT `FK_schedules_offices` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`),
   CONSTRAINT `FKk1xoduufw1mu7ywao2xg90g3f` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Đang kết xuất đổ dữ liệu cho bảng urbanvn.schedules: ~0 rows (xấp xỉ)
 DELETE FROM `schedules`;
